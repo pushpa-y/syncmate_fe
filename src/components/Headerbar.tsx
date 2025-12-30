@@ -16,7 +16,7 @@ const Title = styled.h3`
 `;
 
 export default function HeaderBar() {
-  const { collapsed, setCollapsed } = useSidebar();
+  const { setCollapsed } = useSidebar();
   const location = useLocation();
 
   const getTitle = () => {

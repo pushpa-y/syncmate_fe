@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createGlobalStyle } from "styled-components";
 import type { DefaultTheme } from "styled-components";
 
