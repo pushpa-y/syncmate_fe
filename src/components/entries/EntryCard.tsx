@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import type { Entry as T } from "../../services/Entry";
 import type { Account } from "../../services/accounts";
 import {
@@ -18,6 +18,9 @@ type Props = {
   accounts: Account[];
   onEdit: (t: T) => void;
   onDelete: (id: string) => void;
+  isOpen: boolean;
+  onToggleMenu: () => void;
+  onCloseMenu: () => void;
 };
 
 const formatDate = (dateStr?: string) => {
@@ -33,13 +36,12 @@ export default function EntryCard({
   accounts,
   onEdit,
   onDelete,
+  isOpen,
+  onToggleMenu,
+  onCloseMenu,
 }: Props) {
-  const [openMenu, setOpenMenu] = useState(false);
-
-  // --- Determine account name ---
   const accountName = accounts.find((acc) => acc._id === entry.account)?.name;
 
-  // --- Category info ---
   const category = entry.category
     ? CATEGORY_MAP[entry.category as keyof typeof CATEGORY_MAP]
     : undefined;
@@ -47,14 +49,15 @@ export default function EntryCard({
   const categoryEmoji = category?.emoji ?? "📦";
 
   useEffect(() => {
-    const close = () => setOpenMenu(false);
+    if (!isOpen) return;
+    const close = () => onCloseMenu();
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
-  }, []);
-
+  }, [isOpen, onCloseMenu]);
   return (
     <Card
       className="glass"
+      style={{ zIndex: isOpen ? 50 : 1 }}
       initial={{ y: 6, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       whileHover={{ y: -6, scale: 1.01 }}
@@ -62,7 +65,6 @@ export default function EntryCard({
     >
       <Info>
         <Row>
-          {/* LEFT SIDE */}
           <LeftColumn>
             <CategoryRow>
               <span>{categoryEmoji}</span>
@@ -72,7 +74,6 @@ export default function EntryCard({
             {entry.notes && <div className="muted">{entry.notes}</div>}
           </LeftColumn>
 
-          {/* RIGHT SIDE */}
           <RightColumn>
             <AmountDate>
               <div
@@ -93,21 +94,28 @@ export default function EntryCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setOpenMenu(!openMenu);
+                  onToggleMenu();
                 }}
               >
                 ⋮
               </button>
 
-              {openMenu && (
+              {isOpen && (
                 <div className="menu">
-                  <div onClick={() => onEdit(entry)}>Edit</div>
+                  <div
+                    onClick={() => {
+                      onEdit(entry);
+                      onCloseMenu();
+                    }}
+                  >
+                    Edit
+                  </div>
                   <div
                     className="delete"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setOpenMenu(false);
                       onDelete(entry._id);
+                      onCloseMenu();
                     }}
                   >
                     Delete

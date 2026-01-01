@@ -399,6 +399,13 @@ export const PricingButton = styled.button<{ $primary?: boolean }>`
     background: ${({ $primary }) =>
       $primary ? "#4f46e5" : "rgba(99,102,241,0.2)"};
   }
+  &:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
 `;
 
 

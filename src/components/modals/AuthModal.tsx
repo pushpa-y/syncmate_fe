@@ -1,8 +1,8 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { loginUser, registerUser } from "../../services/auth";
 import { AuthContext } from "../../context/Authcontext";
 import { useNavigate } from "react-router-dom";
-
+import toast from "react-hot-toast";
 import {
   Overlay,
   Modal,
@@ -17,40 +17,100 @@ import {
   CloseButton,
 } from "../../styles/AuthModal";
 
-const AuthModal = ({ onClose }: { onClose: () => void }) => {
+type AuthModalProps = {
+  onClose: () => void;
+  initialMode?: "login" | "signup";
+};
+
+const AuthModal = ({ onClose, initialMode = "login" }: AuthModalProps) => {
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  useEffect(() => {
+    setIsLogin(initialMode === "login");
+    setError(null); // Clear errors when switching modes
+  }, [initialMode]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (error) setError(null); // Clear error when user starts typing
+  };
+
+  // Logic: Client-side validation
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!isLogin && formData.name.trim().length < 2) {
+      return "Please enter a valid name (at least 2 characters).";
+    }
+    if (!emailRegex.test(formData.email)) {
+      return "Please enter a valid email address.";
+    }
+    if (formData.password.length < 6) {
+      return "Password must be at least 6 characters long.";
+    }
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const cleanData = {
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(), // Emails should always be lowercase
+      password: formData.password,
+    };
+
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setLoading(true);
     try {
       if (isLogin) {
-        const res = await loginUser({ email, password });
+        const res = await loginUser({
+          email: formData.email,
+          password: formData.password,
+        });
         auth?.login(res.data.token, res.data.user);
+
+        toast.success(`Welcome back, ${res.data.user.name}!`); // Success popup
+
         onClose();
         navigate("/dashboard");
       } else {
-        await registerUser({ name, email, password });
+        await registerUser(formData);
         setIsLogin(true);
+        setFormData((prev) => ({ ...prev, name: "", password: "" }));
+
+        toast.success("Account created! Please login to continue.", {
+          icon: "🚀",
+        });
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || "Something went wrong");
+      const msg = err.response?.data?.message || "Something went wrong";
+      setError(msg);
+      toast.error(msg); // Error popup
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Overlay onClick={onClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={onClose} aria-label="Close modal">
-          ×
-        </CloseButton>
+        <CloseButton onClick={onClose}>×</CloseButton>
         <ImageSection />
 
         <FormSection>
@@ -59,49 +119,66 @@ const AuthModal = ({ onClose }: { onClose: () => void }) => {
             Smart expense tracking for everyday life
           </BrandSubtitle>
 
-          <Title>{isLogin ? "Login" : "Create account"}</Title>
+          <Title>{isLogin ? "Welcome Back" : "Create Account"}</Title>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {!isLogin && (
               <Input
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                autoComplete="name"
               />
             )}
 
             <Input
+              name="email"
               type="email"
               placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              value={formData.email}
+              onChange={handleChange}
+              autoComplete="email"
             />
 
             <Input
+              name="password"
               type="password"
               placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              //   Check the field length as the user types
+              value={formData.password}
+              onChange={handleChange}
+              autoComplete={isLogin ? "current-password" : "new-password"}
             />
 
-            <Button type="submit">{isLogin ? "Login" : "Sign Up"}</Button>
+            {/* Error Message Display */}
+            {error && (
+              <p
+                style={{
+                  color: "#ef4444",
+                  fontSize: "12px",
+                  marginBottom: "10px",
+                }}
+              >
+                {error}
+              </p>
+            )}
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Syncing..." : isLogin ? "Login" : "Join SyncMate"}
+            </Button>
           </form>
 
           <SwitchText>
-            {isLogin ? (
-              <>
-                Don’t have an account?{" "}
-                <span onClick={() => setIsLogin(false)}>Sign up</span>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <span onClick={() => setIsLogin(true)}>Login</span>
-              </>
-            )}
+            {isLogin ? "New here? " : "Joined us before? "}
+            <span
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
+            >
+              {isLogin ? "Create an account" : "Login now"}
+            </span>
           </SwitchText>
         </FormSection>
       </Modal>

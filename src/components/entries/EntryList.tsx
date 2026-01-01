@@ -1,3 +1,4 @@
+import { useState } from "react";
 import EntryCard from "../entries/EntryCard";
 import type { Entry } from "../../services/Entry";
 import type { Account } from "../../services/accounts";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function EntryList({ entries, accounts, onEdit, onDelete }: Props) {
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {entries.map((entry) => (
@@ -19,6 +21,9 @@ export default function EntryList({ entries, accounts, onEdit, onDelete }: Props
           accounts={accounts}
           onEdit={onEdit}
           onDelete={onDelete}
+          isOpen={activeMenuId === entry._id}
+          onToggleMenu={() => setActiveMenuId(activeMenuId === entry._id ? null : entry._id)}
+          onCloseMenu={() => setActiveMenuId(null)}
         />
       ))}
     </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import "./index.css";
+import { Toaster } from "react-hot-toast"; // <-- ADD THIS LINE
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeProvider";
@@ -19,16 +20,18 @@ createRoot(document.getElementById("root")!).render(
       <SidebarProvider>
         <AuthProvider>
           <AccountsProvider>
+            <Toaster position="top-center" reverseOrder={false} />
+
             <BrowserRouter>
               <Routes>
                 {/* Public route */}
                 <Route path="/" element={<Home />} />
+
                 {/* Protected layout routes */}
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/accounts" element={<AccountsPage />} />
                   <Route path="/analytics" element={<Analytics />} />
-                  {/* Add more: /analytics, /settings, etc */}
                 </Route>
               </Routes>
             </BrowserRouter>

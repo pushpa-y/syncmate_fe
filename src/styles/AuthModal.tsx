@@ -24,10 +24,13 @@ export const Modal = styled.div`
 
 export const ImageSection = styled.div`
   flex: 1;
-  flexshrink: 0;
   background-image: url(${formbg});
   background-size: cover;
   background-position: center;
+  /* Hide image on small mobile screens if necessary */
+  @media (max-width: 640px) {
+    display: none;
+  }
 `;
 
 export const FormSection = styled.div`
@@ -79,9 +82,18 @@ export const Button = styled.button`
   color: white;
   cursor: pointer;
   margin-top: 8px;
+  transition: all 0.2s ease;
 
   &:hover {
     opacity: 0.9;
+  }
+    &:disabled {
+    background: #a5a6f6;
+    cursor: not-allowed;
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 `;
 

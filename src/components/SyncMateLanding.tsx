@@ -33,7 +33,6 @@ import {
   TestimonialAuthor,
   UpcomingImage,
   UpcomingWrapper,
-
 } from "../styles/SyncMateLanding";
 
 import HeroImage from "../assets/HeroImage.png";
@@ -52,7 +51,8 @@ import {
 import AuthModal from "./modals/AuthModal";
 
 const SyncmateLanding = () => {
-  const [openAuth, setOpenAuth] = useState(false);
+  // OPTIMIZED: Single state to manage both visibility and form mode
+  const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
 
   return (
     <PageWrapper>
@@ -68,14 +68,34 @@ const SyncmateLanding = () => {
             <a href="#pricing">Pricing</a>
           </NavLinks>
 
-          <NavButton onClick={() => setOpenAuth(true)}>Login</NavButton>
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <button
+              onClick={() => setAuthMode("login")}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "14px",
+                color: "#374151",
+              }}
+            >
+              Login
+            </button>
+            <NavButton onClick={() => setAuthMode("signup")}>
+              Sign Up Free
+            </NavButton>
+          </div>
         </NavContainer>
       </Navbar>
 
       {/* HERO */}
       <HeroSection id="home">
         <HeroImageWrapper>
-          <img src={HeroImage} alt="Syncmate expense tracker dashboard preview" />
+          <img
+            src={HeroImage}
+            alt="Syncmate expense tracker dashboard preview"
+          />
         </HeroImageWrapper>
 
         <HeroText>
@@ -90,8 +110,8 @@ const SyncmateLanding = () => {
             Track, visualize, and control your finances effortlessly.
           </HeroSubtitle>
 
-          <CTAButton onClick={() => setOpenAuth(true)}>
-            Login / Sign Up
+          <CTAButton onClick={() => setAuthMode("signup")}>
+            Get Started
           </CTAButton>
         </HeroText>
       </HeroSection>
@@ -152,44 +172,38 @@ const SyncmateLanding = () => {
           </FeaturesGrid>
         </Container>
       </Section>
-{/* UPCOMING FEATURES */}
-<Section>
-  <Container>
-    <SectionTitle>Upcoming Features</SectionTitle>
-    <SectionSubtitle>
-      Powerful tools designed to help you save smarter and plan better.
-    </SectionSubtitle>
 
-    <UpcomingWrapper>
-      {/* LEFT: FEATURES */}
-      <FeaturesGrid>
-        <FeatureCard>
-          <CalendarClock size={28} />
-          <h3>Yearly Reports</h3>
-          <p>
-            Get a complete yearly overview of your expenses and savings.
-          </p>
-        </FeatureCard>
+      {/* UPCOMING FEATURES */}
+      <Section>
+        <Container>
+          <SectionTitle>Upcoming Features</SectionTitle>
+          <SectionSubtitle>
+            Powerful tools designed to help you save smarter and plan better.
+          </SectionSubtitle>
 
-        <FeatureCard>
-          <TrendingUp size={28} />
-          <h3>Budget Goals</h3>
-          <p>
-            Set monthly budgets and track how well you stick to them.
-          </p>
-        </FeatureCard>
-      </FeaturesGrid>
+          <UpcomingWrapper>
+            <FeaturesGrid>
+              <FeatureCard>
+                <CalendarClock size={28} />
+                <h3>Yearly Reports</h3>
+                <p>
+                  Get a complete yearly overview of your expenses and savings.
+                </p>
+              </FeatureCard>
 
-      {/* RIGHT: IMAGE */}
-      <UpcomingImage>
-        <img
-          src={piggy}
-          alt="Budget and savings visualization"
-        />
-      </UpcomingImage>
-    </UpcomingWrapper>
-  </Container>
-</Section>
+              <FeatureCard>
+                <TrendingUp size={28} />
+                <h3>Budget Goals</h3>
+                <p>Set monthly budgets and track how well you stick to them.</p>
+              </FeatureCard>
+            </FeaturesGrid>
+
+            <UpcomingImage>
+              <img src={piggy} alt="Budget and savings visualization" />
+            </UpcomingImage>
+          </UpcomingWrapper>
+        </Container>
+      </Section>
 
       {/* TESTIMONIALS */}
       <Section id="testimonials" $bg>
@@ -213,7 +227,8 @@ const SyncmateLanding = () => {
 
             <TestimonialCard>
               <p>
-                “The UI is clean and the analytics are super easy to understand.”
+                “The UI is clean and the analytics are super easy to
+                understand.”
               </p>
               <TestimonialAuthor>
                 <span>Rohit</span>
@@ -247,14 +262,14 @@ const SyncmateLanding = () => {
               <h3>Free</h3>
               <Price>₹0</Price>
               <PriceNote>Forever</PriceNote>
-
               <PricingList>
                 <li>✔ Expense tracking</li>
                 <li>✔ Monthly analytics</li>
                 <li>✔ Category insights</li>
               </PricingList>
-
-              <PricingButton>Get Started</PricingButton>
+              <PricingButton onClick={() => setAuthMode("signup")}>
+                Get Started
+              </PricingButton>
             </PricingCard>
 
             <PricingCard $highlight>
@@ -262,15 +277,15 @@ const SyncmateLanding = () => {
               <h3>Pro</h3>
               <Price>₹199</Price>
               <PriceNote>per month</PriceNote>
-
               <PricingList>
                 <li>✔ Everything in Free</li>
                 <li>✔ Advanced insights</li>
                 <li>✔ Budget goals</li>
                 <li>✔ Yearly reports</li>
               </PricingList>
-
-              <PricingButton $primary>Upgrade to Pro</PricingButton>
+              <PricingButton $primary disabled>
+                Coming Soon!
+              </PricingButton>
             </PricingCard>
           </PricingGrid>
         </Container>
@@ -280,7 +295,10 @@ const SyncmateLanding = () => {
         © {new Date().getFullYear()} Syncmate. All rights reserved.
       </Footer>
 
-      {openAuth && <AuthModal onClose={() => setOpenAuth(false)} />}
+      {/* MODAL: Logic uses the new authMode state */}
+      {authMode && (
+        <AuthModal initialMode={authMode} onClose={() => setAuthMode(null)} />
+      )}
     </PageWrapper>
   );
 };
