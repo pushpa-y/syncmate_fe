@@ -41,14 +41,16 @@ const Dashboard = () => {
   const [entryType, setEntryType] = useState<"income" | "expense" | "transfer">(
     "expense"
   );
-  const [editEntryType, setEditEntryType] = useState<"income" | "expense" | "transfer">("expense");
+  const [editEntryType, setEditEntryType] = useState<
+    "income" | "expense" | "transfer"
+  >("expense");
 
   const [dueDate, setDueDate] = useState(
     new Date().toISOString().split("T")[0]
   );
   const [category, setCategory] = useState("");
   const [editCategory, setEditCategory] = useState("");
-    
+
   const [notes, setNotes] = useState("");
   const [fromAccount, setFromAccount] = useState("");
   const [toAccount, setToAccount] = useState("");
@@ -73,26 +75,34 @@ const Dashboard = () => {
   // --- Fetch entries ---
   const fetchEntries = async (p = 1) => {
     if (!auth?.token) return;
+
     try {
+      // FIX: Only send an ID if activeAccount is a real ID and NOT "all"
       const accountIdToSend =
-        activeAccount && activeAccount !== "all" ? activeAccount : undefined;
+        activeAccount && activeAccount !== "all" && activeAccount !== ""
+          ? activeAccount
+          : undefined;
+
       const res = await getEntries(auth.token, {
         page: p,
         limit: PER_PAGE,
         sortBy,
         category: categoryFilter,
-        accountId: accountIdToSend,
+        accountId: accountIdToSend, // If undefined, Backend should return all user entries
       });
+
       setEntries(res.data.entries);
       setPage(res.data.page);
       setPages(res.data.pages);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching entries:", err);
     }
   };
 
   useEffect(() => {
-    fetchEntries(page);
+    if (auth?.token) {
+      fetchEntries(page);
+    }
   }, [auth?.token, sortBy, page, categoryFilter, activeAccount]);
 
   // --- CREATE ---
@@ -106,7 +116,7 @@ const Dashboard = () => {
           alert("Please select both From and To accounts");
           return;
         }
-       
+
         await createEntry(auth.token, {
           entryType: "transfer",
           value: value,

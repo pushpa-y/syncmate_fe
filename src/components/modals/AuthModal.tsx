@@ -80,17 +80,17 @@ const AuthModal = ({ onClose, initialMode = "login" }: AuthModalProps) => {
     try {
       if (isLogin) {
         const res = await loginUser({
-          email: formData.email,
-          password: formData.password,
+          email: cleanData.email,
+          password: cleanData.password,
         });
         auth?.login(res.data.token, res.data.user);
 
-        toast.success(`Welcome back, ${res.data.user.name}!`); // Success popup
+        toast.success(`Welcome back, ${res.data.user.name}!`);
 
         onClose();
         navigate("/dashboard");
       } else {
-        await registerUser(formData);
+        await registerUser(cleanData);
         setIsLogin(true);
         setFormData((prev) => ({ ...prev, name: "", password: "" }));
 
