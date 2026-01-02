@@ -33,6 +33,8 @@ import {
   TestimonialAuthor,
   UpcomingImage,
   UpcomingWrapper,
+  MenuIcon,
+  MobileActions,
 } from "../styles/SyncMateLanding";
 
 import HeroImage from "../assets/HeroImage.png";
@@ -46,13 +48,15 @@ import {
   Briefcase,
   HeartHandshake,
   CalendarClock,
+  Menu,
+  X,
 } from "lucide-react";
 
 import AuthModal from "./modals/AuthModal";
 
 const SyncmateLanding = () => {
-  // OPTIMIZED: Single state to manage both visibility and form mode
   const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <PageWrapper>
@@ -61,14 +65,22 @@ const SyncmateLanding = () => {
         <NavContainer>
           <Logo>Syncmate</Logo>
 
-          <NavLinks>
-            <a href="#home">Home</a>
-            <a href="#features">Features</a>
-            <a href="#testimonials">Testimonials</a>
-            <a href="#pricing">Pricing</a>
+          <NavLinks $isOpen={isMenuOpen}>
+            <a href="#home" onClick={() => setIsMenuOpen(false)}>
+              Home
+            </a>
+            <a href="#features" onClick={() => setIsMenuOpen(false)}>
+              Features
+            </a>
+            <a href="#testimonials" onClick={() => setIsMenuOpen(false)}>
+              Testimonials
+            </a>
+            <a href="#pricing" onClick={() => setIsMenuOpen(false)}>
+              Pricing
+            </a>
           </NavLinks>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <MobileActions>
             <button
               onClick={() => setAuthMode("login")}
               style={{
@@ -85,7 +97,11 @@ const SyncmateLanding = () => {
             <NavButton onClick={() => setAuthMode("signup")}>
               Sign Up Free
             </NavButton>
-          </div>
+            {/* Hamburger Toggle */}
+            <MenuIcon onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </MenuIcon>
+          </MobileActions>
         </NavContainer>
       </Navbar>
 

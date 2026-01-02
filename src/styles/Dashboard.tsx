@@ -28,25 +28,10 @@ export const AccountsCard = styled(BaseCard)`
   border-radius: 14px;
 `;
 
-export const AccountsWrapper = styled.div`
-  padding: 16px;
-  background: ${(p) => p.theme.cardBg || "rgba(255,255,255,0.1)"};
-  display: grid;
-  //grid-template-columns: repeat(3, 1fr);   /* ⬅️ 3 columns */
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-
-  gap: 12px; /* spacing between items */
-
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr); /* Tablet */
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr; /* Mobile */
-  }
-`;
-
 export const AccountItem = styled.div<{ $active: boolean }>`
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   padding: 14px;
   position: relative;
   border-radius: 12px;
@@ -79,42 +64,83 @@ export const AddAccountButton = styled.button`
     background: #4f46e5;
   }
 `;
-export const AllAccountsLink = styled.a`
-  display: block;
+export const AllAccountsLink = styled.button`
+  background: none;
+  border: none;
+  display: inline-block;
   text-align: center;
   margin-top: 16px;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 500;
-  color: "#6366f1";
+  font-size: 14px;
+  font-weight: 600;
+  color: #6366f1; /* Indigo color */
   text-decoration: underline;
+  transition: opacity 0.2s;
 
-   &:hover {
-    opacity: 0.8;
+  &:hover {
+    opacity: 0.7;
+    color: #4f46e5;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 13px;
+    margin-top: 12px;
+  }
+`;
+
+// Update AccountsWrapper to be more flexible on small screens
+export const AccountsWrapper = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   }
 `;
 
 export const FloatingAddButton = styled.button`
-  position: fixed;
-  right: 32px;
-  bottom: 32px;
-  background: #6366f1;
-  width: 65px;
-  height: 65px;
+  position: fixed; /* Fixes it to the screen viewport */
+  bottom: 30px; /* Distance from bottom */
+  right: 30px; /* Distance from right */
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border: none;
+  background-color: #6366f1;
   color: white;
-  font-size: 36px;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  /* Critical: Ensure it is above the Entry cards */
+  z-index: 1000;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  transition: 0.25s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 
   &:hover {
-    transform: scale(1.08);
-    background: #4f46e5;
+    background-color: #4f46e5;
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  @media (max-width: 768px) {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
   }
 `;
 

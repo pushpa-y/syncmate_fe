@@ -1,38 +1,60 @@
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
+export const ChartsContainer = styled.div`
+  width: 100%;
+  box-sizing: border-box;
+`;
+
+export const ChartsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 20px;
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+
 export const ChartCard = styled(motion.div)`
   background: ${({ theme }) => theme.cardBg || "white"};
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-
   gap: 12px;
   min-height: 360px;
-
+  width: 100%;
+  box-sizing: border-box;
   transition: 0.25s ease;
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   }
-`;
 
-export const ChartsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 20px;
+  &.full-width {
+    grid-column: 1 / -1;
+  }
 `;
 
 export const MonthSelector = styled.div`
   display: flex;
   gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+`;
+
+export const FilterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 20px;
 `;
 
@@ -42,6 +64,7 @@ export const MonthButton = styled.button<{ $active: boolean }>`
   border: none;
   cursor: pointer;
   font-size: 14px;
+  white-space: nowrap;
 
   background: ${({ $active }) => ($active ? "#6366f1" : "rgba(0,0,0,0.06)")};
   color: ${({ $active }) => ($active ? "white" : "#333")};
@@ -67,9 +90,17 @@ export const EmptyState = styled.div`
 `;
 export const SummaryContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-bottom: 24px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 `;
 
 export const SummaryCard = styled(ChartCard)<{ $color: string }>`

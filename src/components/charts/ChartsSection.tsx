@@ -1,7 +1,17 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useContext } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { AuthContext } from "../../context/Authcontext";
+import {
+  selectTotalBalance,
+  selectAccounts,
+} from "../../redux/selectors/accountSelectors";
+// 2. Import the action creator
+import { listAccounts } from "../../redux/actions/accountActions";
+
 import {
   PieChart,
   Pie,
+  Label,
   Cell,
   Tooltip,
   Legend,
@@ -15,10 +25,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Entry } from "../../services/Entry";
-import type { Account } from "../../services/accounts";
 import { CATEGORY_MAP } from "../../constants/categories";
 
 import {
+  ChartsContainer,
+  FilterSection,
   ChartsGrid,
   ChartCard,
   MonthSelector,
@@ -31,10 +42,10 @@ import {
   DropdownItem,
   RelativeWrapper,
 } from "../../styles/ChartsSection";
+import type { Account } from "../../services/accounts";
 
 type Props = {
   entries: Entry[];
-  accounts: Account[];
 };
 
 const COLORS = ["#6366F1", "#F59E0B", "#EF4444", "#06B6D4", "#8B5CF6"];
@@ -70,7 +81,20 @@ function useAnimatedNumber(value: number, duration = 600) {
   return animated;
 }
 
-export default function ChartsSection({ entries, accounts }: Props) {
+export default function ChartsSection({ entries }: Props) {
+  const dispatch = useDispatch();
+  const auth = useContext(AuthContext);
+
+  const accounts = useSelector(selectAccounts);
+  const totalBalance = useSelector(selectTotalBalance);
+  const animatedTotal = useAnimatedNumber(totalBalance);
+
+  useEffect(() => {
+    if (auth?.token) {
+      dispatch(listAccounts(auth.token) as any);
+    }
+  }, [dispatch, auth?.token]);
+
   const now = new Date();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -169,61 +193,64 @@ export default function ChartsSection({ entries, accounts }: Props) {
   const netSavings = totalIn - totalOut;
 
   return (
-    <>
-      {/* 1. ACCOUNT FILTER CHIPS */}
-      <MonthSelector style={{ flexWrap: "wrap", marginBottom: "10px" }}>
-        <MonthButton
-          $active={selectedAccountId === "all"}
-          onClick={() => setSelectedAccountId("all")}
-        >
-          All Accounts
-        </MonthButton>
-        {accounts.map((acc) => (
+    <ChartsContainer>
+      <FilterSection>
+        {/* 1. ACCOUNT FILTER CHIPS */}
+        <MonthSelector>
           <MonthButton
-            key={acc._id}
-            $active={selectedAccountId === acc._id}
-            onClick={() => setSelectedAccountId(acc._id)}
+            $active={selectedAccountId === "all"}
+            onClick={() => setSelectedAccountId("all")}
           >
-            {acc.name}
+            All Accounts
           </MonthButton>
-        ))}
-      </MonthSelector>
+          {accounts &&
+            accounts.map((acc: Account) => (
+              <MonthButton
+                key={acc._id}
+                $active={selectedAccountId === acc._id}
+                onClick={() => setSelectedAccountId(acc._id)}
+              >
+                {acc.name}
+              </MonthButton>
+            ))}
+        </MonthSelector>
 
-      {/* 2. MONTH SELECTOR */}
-      <MonthSelector>
-        {monthsList.slice(0, 3).map((m) => (
-          <MonthButton
-            key={m.label}
-            $active={m.label === selectedMonth.label}
-            onClick={() => setSelectedMonth(m)}
-          >
-            {m.label}
-          </MonthButton>
-        ))}
-        <RelativeWrapper ref={dropdownRef}>
-          <MonthButton
-            $active={false}
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            ⋯
-          </MonthButton>
-          {dropdownOpen && (
-            <DropdownMenu>
-              {monthsList.slice(3, 15).map((m) => (
-                <DropdownItem
-                  key={m.label}
-                  onClick={() => {
-                    setSelectedMonth(m);
-                    setDropdownOpen(false);
-                  }}
-                >
-                  {m.label}
-                </DropdownItem>
-              ))}
-            </DropdownMenu>
-          )}
-        </RelativeWrapper>
-      </MonthSelector>
+        {/* 2. MONTH SELECTOR */}
+        <MonthSelector>
+          {monthsList.slice(0, 3).map((m) => (
+            <MonthButton
+              key={m.label}
+              $active={m.label === selectedMonth.label}
+              onClick={() => setSelectedMonth(m)}
+            >
+              {m.label}
+            </MonthButton>
+          ))}
+          <RelativeWrapper ref={dropdownRef}>
+            <MonthButton
+              $active={false}
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              ⋯
+            </MonthButton>
+            {dropdownOpen && (
+              <DropdownMenu>
+                {monthsList.slice(3, 15).map((m) => (
+                  <DropdownItem
+                    key={m.label}
+                    onClick={() => {
+                      setSelectedMonth(m);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    {m.label}
+                  </DropdownItem>
+                ))}
+              </DropdownMenu>
+            )}
+          </RelativeWrapper>
+        </MonthSelector>
+      </FilterSection>
 
       {filteredEntries.length === 0 ? (
         <EmptyState>📭 No data found for {selectedMonth.label}</EmptyState>
@@ -257,10 +284,32 @@ export default function ChartsSection({ entries, accounts }: Props) {
                     innerRadius={60}
                     outerRadius={100}
                     paddingAngle={5}
+                    stroke="none"
                   >
                     {expenseByCat.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
+                    <Label
+                      value={`₹${animatedTotal.toLocaleString()}`}
+                      position="center"
+                      fill="#0f172a"
+                      style={{
+                        fontSize: "22px",
+                        fontWeight: "700",
+                        fontFamily: "Inter",
+                      }}
+                    />
+                    <Label
+                      value="Total Balance"
+                      position="center"
+                      dy={24}
+                      fill="#64748b"
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "500",
+                        textTransform: "uppercase",
+                      }}
+                    />
                   </Pie>
                   <Tooltip formatter={(v: any) => `₹${v.toLocaleString()}`} />
                   <Legend />
@@ -311,17 +360,13 @@ export default function ChartsSection({ entries, accounts }: Props) {
             </ChartCard>
 
             {/* 6. HORIZONTAL BAR CHART */}
-            <ChartCard style={{ gridColumn: "1 / -1" }}>
+            <ChartCard className="full-width">
               <ChartTitle>Spending by Category</ChartTitle>
               <ResponsiveContainer
                 width="100%"
                 height={Math.max(expenseByCat.length * 45, 250)}
               >
-                <BarChart
-                  layout="vertical"
-                  data={expenseByCat}
-                  margin={{ left: 20, right: 40 }}
-                >
+                <BarChart layout="vertical" data={expenseByCat}>
                   <XAxis type="number" hide />
                   <YAxis
                     dataKey="name"
@@ -354,6 +399,6 @@ export default function ChartsSection({ entries, accounts }: Props) {
           </ChartsGrid>
         </>
       )}
-    </>
+    </ChartsContainer>
   );
 }

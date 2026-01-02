@@ -1,6 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { AuthContext } from "../context/Authcontext";
 import { useAccounts } from "../context/AccountsContext";
+import { useDispatch } from "react-redux";
+import { listAccounts } from "../redux/actions/accountActions";
+import styled from "styled-components";
 
 import {
   getEntries,
@@ -10,7 +13,7 @@ import {
 } from "../services/Entry";
 import type { Entry } from "../services/Entry";
 
-//components
+// components
 import Modal from "../components/modals/Modal";
 import FiltersBar from "../components/FiltersBar";
 import EntryList from "../components/entries/EntryList";
@@ -19,13 +22,38 @@ import EntryFormEdit from "../components/forms/EntryFormEdit";
 import AccountsContainer from "../components/accounts/AccountsContainer";
 import ChartsSection from "../components/charts/ChartsSection";
 
-//styles
 import { FloatingAddButton } from "../styles/Dashboard";
+
+const DashboardRoot = styled.div`
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  overflow-x: hidden;
+`;
+
+const DashboardGrid = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    max-width: 100vw;
+    overflow-x: hidden;
+    //gap: 16px;
+  }
+`;
 
 const PER_PAGE = 10;
 
 const Dashboard = () => {
   const auth = useContext(AuthContext);
+  const dispatch = useDispatch();
   const {
     accounts,
     activeAccount,
@@ -37,57 +65,55 @@ const Dashboard = () => {
 
   // --- State ---
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [sortBy, setSortBy] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+  // Create Form State
   const [value, setValue] = useState("");
   const [entryType, setEntryType] = useState<"income" | "expense" | "transfer">(
     "expense"
   );
-  const [editEntryType, setEditEntryType] = useState<
-    "income" | "expense" | "transfer"
-  >("expense");
-
   const [dueDate, setDueDate] = useState(
     new Date().toISOString().split("T")[0]
   );
   const [category, setCategory] = useState("");
-  const [editCategory, setEditCategory] = useState("");
-
   const [notes, setNotes] = useState("");
   const [fromAccount, setFromAccount] = useState("");
   const [toAccount, setToAccount] = useState("");
 
-  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  // Edit Form State
   const [editValue, setEditValue] = useState("");
+  const [editEntryType, setEditEntryType] = useState<
+    "income" | "expense" | "transfer"
+  >("expense");
   const [editDueDate, setEditDueDate] = useState("");
+  const [editCategory, setEditCategory] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editAccountId, setEditAccountId] = useState<string | null>(null);
-  const [editFromAccountId, setEditFromAccountId] = useState<string>("");
-  const [editToAccountId, setEditToAccountId] = useState<string>("");
+  const [editFromAccountId, setEditFromAccountId] = useState("");
+  const [editToAccountId, setEditToAccountId] = useState("");
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
+  const syncBalances = useCallback(() => {
+    if (auth?.token) dispatch(listAccounts(auth.token) as any);
+  }, [auth?.token, dispatch]);
 
-  const [sortBy, setSortBy] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-
-  // --- Fetch entries ---
   const fetchEntries = async (p = 1) => {
     if (!auth?.token) return;
     try {
-      // If it's "all" or null, we want the backend to give us EVERYTHING
-      const accountIdToQuery =
+      const accId =
         activeAccount === "all" || !activeAccount ? undefined : activeAccount;
-
       const res = await getEntries(auth.token, {
         page: p,
         limit: PER_PAGE,
         sortBy,
         category: categoryFilter,
-        accountId: accountIdToQuery, // This will now be undefined for "All Accounts"
+        accountId: accId,
       });
-
       setEntries(res.data.entries);
       setPage(res.data.page);
       setPages(res.data.pages);
@@ -97,104 +123,73 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (auth?.token) {
-      fetchEntries(page);
-    }
+    syncBalances();
+  }, [syncBalances]);
+  useEffect(() => {
+    fetchEntries(page);
   }, [auth?.token, sortBy, page, categoryFilter, activeAccount]);
 
-  // --- CREATE ---
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth?.token) return;
 
     try {
-      if (entryType === "transfer") {
-        if (!fromAccount || !toAccount) {
-          alert("Please select both From and To accounts");
-          return;
-        }
+      //Explicitly defining payload keys //fix later
+      const payload: any =
+        entryType === "transfer"
+          ? { entryType, value, fromAccount, toAccount, notes, dueDate }
+          : {
+              entryType,
+              value,
+              accountId: activeAccount!,
+              category,
+              notes,
+              dueDate,
+            };
 
-        await createEntry(auth.token, {
-          entryType: "transfer",
-          value: value,
-          fromAccountId: fromAccount,
-          toAccountId: toAccount,
-          notes,
-          ...(dueDate && { dueDate }),
-        });
+      await createEntry(auth.token, payload);
 
+      if (entryType === "transfer")
         moveBalanceBetweenAccounts(fromAccount, toAccount, Number(value));
-      } else {
-        if (!activeAccount) {
-          alert("Please select an account");
-          return;
-        }
-        if (!category) {
-          alert("Please select a category");
-          return;
-        }
-
-        await createEntry(auth.token, {
-          value: value,
-          entryType,
-          accountId: activeAccount,
-          notes,
-          category,
-          ...(dueDate && { dueDate }),
-        });
-
+      else
         applyBalanceChange(
-          activeAccount,
+          activeAccount!,
           entryType === "income" ? Number(value) : -Number(value)
         );
-      }
 
-      // Reset form
       setValue("");
-      setEntryType("expense");
-      setFromAccount("");
-      setToAccount("");
-      setDueDate("");
       setNotes("");
-      setCategory("");
       fetchEntries(1);
+      syncBalances();
       setIsAddEntryModalOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Something went wrong while creating the entry.");
     }
   };
 
-  // --- DELETE ---
   const handleDelete = async (id: string) => {
     if (!auth?.token) return;
-
-    const entryToDelete = entries.find((e) => e._id === id);
-    if (!entryToDelete) return;
-
+    const entry = entries.find((e) => e._id === id);
+    if (!entry) return;
     await deleteEntry(auth.token, id);
-
-    if (entryToDelete.entryType === "transfer") {
+    if (entry.entryType === "transfer")
       moveBalanceBetweenAccounts(
-        entryToDelete.toAccount!,
-        entryToDelete.fromAccount!,
-        Number(entryToDelete.value)
+        entry.toAccount!,
+        entry.fromAccount!,
+        Number(entry.value)
       );
-    } else {
+    else
       applyBalanceDelete(
-        entryToDelete.baseAccount!,
-        entryToDelete.entryType === "income"
-          ? Number(entryToDelete.value)
-          : -Number(entryToDelete.value)
+        entry.baseAccount!,
+        entry.entryType === "income"
+          ? Number(entry.value)
+          : -Number(entry.value)
       );
-    }
-
     setEntries((prev) => prev.filter((e) => e._id !== id));
+    syncBalances();
   };
 
-  // --- EDIT ---
   const startEdit = (entry: Entry) => {
-    console.log("Editing entry:", entry);
     setEditingEntry(entry);
     setEditValue(entry.value || "");
     setEditEntryType(entry.entryType ?? "expense");
@@ -211,130 +206,82 @@ const Dashboard = () => {
     e.preventDefault();
     if (!auth?.token || !editingEntry) return;
 
-    const payload: Partial<Entry> =
+    const payload: any =
       editEntryType === "transfer"
         ? {
             entryType: "transfer",
             value: editValue,
-            fromAccountId: editFromAccountId,
-            toAccountId: editToAccountId,
+            fromAccount: editFromAccountId,
+            toAccount: editToAccountId,
             notes: editNotes,
-            ...(editDueDate && { dueDate: editDueDate }),
+            dueDate: editDueDate,
           }
         : {
-            entryType: editEntryType as "income" | "expense",
+            entryType: editEntryType,
             value: editValue,
-            accountId: editAccountId!,
+            accountId: editAccountId ?? undefined,
             notes: editNotes,
             category: editCategory,
-            ...(editDueDate && { dueDate: editDueDate }),
+            dueDate: editDueDate,
           };
 
-    const res = await updateEntry(auth.token, editingEntry._id, payload);
-
-    setEntries((prev) =>
-      prev.map((e) => (e._id === res.data._id ? res.data : e))
-    );
-
-    // Adjust balances
-    if (editingEntry.entryType === "transfer") {
-      moveBalanceBetweenAccounts(
-        editingEntry.fromAccount!,
-        editingEntry.toAccount!,
-        -Number(editingEntry.value)
-      );
-      moveBalanceBetweenAccounts(
-        editFromAccountId,
-        editToAccountId,
-        Number(editValue)
-      );
-    } else {
-      const oldAmt =
-        (editingEntry.entryType === "income" ? 1 : -1) *
-        Number(editingEntry.value);
-      const newAmt = (editEntryType === "income" ? 1 : -1) * Number(editValue);
-      const diff = newAmt - oldAmt;
-      applyBalanceChange(editAccountId!, diff);
-    }
-
+    await updateEntry(auth.token, editingEntry._id, payload);
     fetchEntries(page);
+    syncBalances();
     setIsModalOpen(false);
   };
 
-  // --- Visible entries (filter/sort) ---
-  const visible = entries
-    .filter((entry) =>
-      categoryFilter ? entry.category === categoryFilter : true
-    )
-    .sort((a, b) => {
-      if (sortBy === "due-asc")
-        return (
-          new Date(a.dueDate || "").getTime() -
-          new Date(b.dueDate || "").getTime()
-        );
-      if (sortBy === "due-desc")
-        return (
-          new Date(b.dueDate || "").getTime() -
-          new Date(a.dueDate || "").getTime()
-        );
-      return 0;
-    });
-
   return (
-    <>
-      <AccountsContainer />
-      <ChartsSection entries={entries} accounts={accounts} />
+    <DashboardRoot>
+      <DashboardGrid>
+        <AccountsContainer />
+        <ChartsSection entries={entries} />
+        <FiltersBar
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+        />
+        <EntryList
+          entries={entries}
+          accounts={accounts}
+          onEdit={startEdit}
+          onDelete={handleDelete}
+        />
 
-      <FiltersBar
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-      />
-      <EntryList
-        entries={visible}
-        accounts={accounts}
-        onEdit={startEdit}
-        onDelete={handleDelete}
-      />
-
-      {/* Pagination */}
-      <div className="flex justify-center gap-3 mt-6">
-        <button onClick={() => setPage(page - 1)} disabled={page <= 1}>
-          Prev
-        </button>
-        {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
-          <button
-            key={p}
-            className={p === page ? "bg-indigo-600 text-white" : ""}
-            onClick={() => setPage(p)}
-          >
-            {p}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+            padding: "20px 0 80px",
+          }}
+        >
+          <button onClick={() => setPage(page - 1)} disabled={page <= 1}>
+            Prev
           </button>
-        ))}
-        <button onClick={() => setPage(page + 1)} disabled={page >= pages}>
-          Next
-        </button>
-      </div>
+          <button onClick={() => setPage(page + 1)} disabled={page >= pages}>
+            Next
+          </button>
+        </div>
+      </DashboardGrid>
 
-      {/* Add Entry Modal */}
       <Modal
         isOpen={isAddEntryModalOpen}
         onClose={() => setIsAddEntryModalOpen(false)}
       >
-        <h2 className="text-xl font-semibold mb-3 text-center">
-          Add New Entry
-        </h2>
         <EntryFormCreate
           value={value}
           setValue={setValue}
           entryType={entryType}
           setEntryType={setEntryType}
-          accountId={activeAccount || undefined}
-          fromAccountId={fromAccount}
-          toAccountId={toAccount}
+          accountId={
+            activeAccount === "all" ? undefined : activeAccount ?? undefined
+          }
           setAccountId={setActiveAccount}
+          fromAccountId={fromAccount}
           setFromAccountId={setFromAccount}
+          toAccountId={toAccount}
           setToAccountId={setToAccount}
           dueDate={dueDate}
           setDueDate={setDueDate}
@@ -348,9 +295,7 @@ const Dashboard = () => {
         />
       </Modal>
 
-      {/* Edit Entry Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <h2 className="text-xl font-semibold mb-3 text-center">Edit Entry</h2>
         <EntryFormEdit
           editValue={editValue}
           setEditValue={setEditValue}
@@ -361,10 +306,10 @@ const Dashboard = () => {
           editNotes={editNotes}
           setEditNotes={setEditNotes}
           editAccountId={editAccountId ?? undefined}
-          editFromAccountId={editFromAccountId}
-          editToAccountId={editToAccountId}
           setEditAccountId={setEditAccountId}
+          editFromAccountId={editFromAccountId}
           setEditFromAccountId={setEditFromAccountId}
+          editToAccountId={editToAccountId}
           setEditToAccountId={setEditToAccountId}
           editCategory={editCategory}
           setEditCategory={setEditCategory}
@@ -377,7 +322,7 @@ const Dashboard = () => {
       <FloatingAddButton onClick={() => setIsAddEntryModalOpen(true)}>
         +
       </FloatingAddButton>
-    </>
+    </DashboardRoot>
   );
 };
 

@@ -5,6 +5,17 @@ export const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+export const MenuIcon = styled.div`
+  display: none;
+  cursor: pointer;
+  color: #374151;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
 export const Navbar = styled.nav`
   position: sticky;
   top: 0;
@@ -16,7 +27,7 @@ export const Navbar = styled.nav`
 export const NavContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 24px;
+  padding: 14px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,7 +40,7 @@ export const Logo = styled.div`
   letter-spacing: -0.02em;
 `;
 
-export const NavLinks = styled.div`
+export const NavLinks = styled.div<{ $isOpen?: boolean }>`
   display: flex;
   align-items: center;
   gap: 100px;
@@ -59,6 +70,32 @@ export const NavLinks = styled.div`
 
     &:hover::after {
       width: 100%;
+    }
+  }
+  @media (max-width: 768px) {
+    display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
+    flex-direction: column;
+    position: absolute;
+    top: 70px; /* Adjust based on navbar height */
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 99;
+    gap: 20px;
+  }
+`;
+
+export const MobileActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  @media (max-width: 480px) {
+    button:first-child {
+      display: none;
     }
   }
 `;
@@ -136,15 +173,15 @@ export const ExtraItem = styled.div`
 
 export const HeroSection = styled.div`
   background: #ffffff;
-  display: flex; 
-  gap: 120px; 
+  display: flex;
+  gap: 120px;
   align-items: center;
   justify-content: center;
   //text-align: center;
   padding: 0px 0px 0px 0px;
   @media (max-width: 900px) {
     display: grid;
-    gap:0px;
+    gap: 0px;
     grid-template-columns: 1fr;
     text-align: center;
   }
@@ -152,14 +189,20 @@ export const HeroSection = styled.div`
 
 export const HeroImageWrapper = styled.div`
   img {
-  width: 550px;
+    width: 100%;
+    max-width: 550px;
+    height: auto;
+  }
+  @media (max-width: 900px) {
+    order: 2; /* Move image below text on mobile */
+    margin-top: 40px;
   }
 `;
 
 export const HeroText = styled.div`
   display: flex;
   flex-direction: column;
-  gap:20px;
+  gap: 20px;
 
   @media (max-width: 900px) {
     align-items: center;
@@ -169,6 +212,9 @@ export const HeroTitle = styled.h1`
   font-size: 42px;
   font-weight: 750;
   color: #111827;
+  @media (max-width: 600px) {
+    font-size: 32px;
+  }
 `;
 
 export const HeroSubtitle = styled.p`
@@ -176,6 +222,9 @@ export const HeroSubtitle = styled.p`
   margin: 0px 0px;
   font-size: 16px;
   color: #6b7280;
+  @media (max-width: 600px) {
+    font-size: 13px;
+  }
 `;
 
 export const CTAButton = styled.button`
@@ -183,11 +232,7 @@ export const CTAButton = styled.button`
   width: 200px;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #4f46e5
-  );
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -199,13 +244,13 @@ export const CTAButton = styled.button`
   }
 `;
 
-
 export const Section = styled.section<{ $bg?: boolean }>`
   padding: 80px 20px;
-  background: ${({ $bg }) =>
-    $bg ? "#f1f5ff" : "white"};
+  background: ${({ $bg }) => ($bg ? "#f1f5ff" : "white")};
+  @media (max-width: 768px) {
+    padding: 40px 16px;
+  }
 `;
-
 
 export const Container = styled.div`
   max-width: 1100px;
@@ -217,6 +262,9 @@ export const SectionTitle = styled.h2`
   font-weight: 700;
   margin-bottom: 12px;
   color: #111827;
+  @media (max-width: 768px) {
+    font-size: 26px;
+  }
 `;
 
 export const FeaturesGrid = styled.div`
@@ -229,14 +277,13 @@ export const FeaturesGrid = styled.div`
 export const SectionSubtitle = styled.p`
   max-width: 520px;
   color: #6b7280;
+  @media (max-width: 600px) {
+    font-size: 14px;
+  }
 `;
 
 export const FeatureCard = styled.div`
-  background: linear-gradient(
-    180deg,
-    #ffffff,
-    #f8faff
-  );
+  background: linear-gradient(180deg, #ffffff, #f8faff);
   padding: 26px;
   border-radius: 16px;
   border: 1px solid rgba(99, 102, 241, 0.08);
@@ -267,7 +314,6 @@ export const FeatureCard = styled.div`
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
   }
 `;
-
 
 export const AudienceGrid = styled.div`
   display: grid;
@@ -320,19 +366,21 @@ export const Footer = styled.footer`
   background: #eef2ff;
 `;
 
-
 export const PricingGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 32px;
   margin-top: 50px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    padding: 0 10px;
+  }
 `;
 
 export const PricingCard = styled.div<{ $highlight?: boolean }>`
   background: ${({ $highlight }) =>
-    $highlight
-      ? "linear-gradient(180deg, #eef2ff, #ffffff)"
-      : "white"};
+    $highlight ? "linear-gradient(180deg, #eef2ff, #ffffff)" : "white"};
   border-radius: 18px;
   padding: 36px 28px;
   text-align: center;
@@ -392,8 +440,7 @@ export const PricingButton = styled.button<{ $primary?: boolean }>`
 
   background: ${({ $primary }) =>
     $primary ? "#6366f1" : "rgba(99,102,241,0.1)"};
-  color: ${({ $primary }) =>
-    $primary ? "white" : "#6366f1"};
+  color: ${({ $primary }) => ($primary ? "white" : "#6366f1")};
 
   &:hover {
     background: ${({ $primary }) =>
@@ -407,7 +454,6 @@ export const PricingButton = styled.button<{ $primary?: boolean }>`
     transform: none;
   }
 `;
-
 
 export const TestimonialsGrid = styled.div`
   display: grid;

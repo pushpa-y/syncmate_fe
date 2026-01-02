@@ -35,7 +35,6 @@ const AccountsContainer = () => {
 
   const handleDeleteAccount = async () => {
     if (!confirmDeleteId) return;
-
     await deleteAccount(confirmDeleteId);
     setShowConfirmModal(false);
   };
@@ -57,44 +56,45 @@ const AccountsContainer = () => {
           {accounts.map((acc) => (
             <AccountItem
               key={acc._id}
-              $active={activeAccount === acc._id || activeAccount === "all"}
+              $active={activeAccount === acc._id}
               onClick={() => {
                 setActiveAccount(acc._id);
                 localStorage.setItem("activeAccount", acc._id);
               }}
             >
-              <span>{acc.name}</span>
-              <span>₹{acc.balance.toLocaleString()}</span>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 500 }}>{acc.name}</span>
+                <span style={{ fontSize: "14px", opacity: 0.8 }}>
+                  ₹{acc.balance.toLocaleString()}
+                </span>
+              </div>
 
-              {/* 3 dots */}
               <DotsWrapper
                 onClick={(e) => {
                   e.stopPropagation();
-                  setMenuOpenFor(acc._id);
+                  setMenuOpenFor(acc._id === menuOpenFor ? null : acc._id);
                 }}
               >
                 ⋮
               </DotsWrapper>
 
               {menuOpenFor === acc._id && (
-                <AccountMenu>
+                <AccountMenu onClick={(e) => e.stopPropagation()}>
                   <MenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpenFor(null);
+                    onClick={() => {
                       setEditAccountData(acc);
                       setIsEditModalOpen(true);
+                      setMenuOpenFor(null);
                     }}
                   >
                     Edit
                   </MenuItem>
-
                   <MenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpenFor(null);
+                    style={{ color: "#ef4444" }}
+                    onClick={() => {
                       setConfirmDeleteId(acc._id);
                       setShowConfirmModal(true);
+                      setMenuOpenFor(null);
                     }}
                   >
                     Delete
@@ -109,15 +109,17 @@ const AccountsContainer = () => {
           </AddAccountButton>
         </AccountsWrapper>
 
-        {/* Select All Accounts */}
-        <AllAccountsLink
-          onClick={() => {
-            setActiveAccount("all");
-            localStorage.setItem("activeAccount", "all");
-          }}
-        >
-          Select All Accounts
-        </AllAccountsLink>
+        <div style={{ textAlign: "center" }}>
+          <AllAccountsLink
+            as="button"
+            onClick={() => {
+              setActiveAccount("all");
+              localStorage.setItem("activeAccount", "all");
+            }}
+          >
+            Select All Accounts
+          </AllAccountsLink>
+        </div>
       </AccountsCard>
 
       {/* Modals */}
@@ -125,7 +127,6 @@ const AccountsContainer = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
-
       {editAccountData && (
         <EditAccountModal
           isOpen={isEditModalOpen}
@@ -137,11 +138,10 @@ const AccountsContainer = () => {
           }}
         />
       )}
-
       <ConfirmationModal
         open={showConfirmModal}
         title="Delete Account?"
-        message="Are you sure? This cannot be undone."
+        message="Are you sure? All entries for this account will remain but lose their association."
         onCancel={() => setShowConfirmModal(false)}
         onConfirm={handleDeleteAccount}
       />
