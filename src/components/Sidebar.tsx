@@ -1,5 +1,4 @@
-// Sidebar.tsx
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FiHome,
   FiBarChart2,
@@ -8,123 +7,129 @@ import {
   FiMoon,
   FiUser,
   FiLayers,
+  FiLogOut,
 } from "react-icons/fi";
 import { useContext, useState } from "react";
 import { useTheme } from "../context/ThemeProvider";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/Authcontext";
 import { useSidebar } from "../context/SidebarContext";
-
-/* ---------------- Styled components ---------------- */
 import {
   Aside,
-  BrandRow,
   Nav,
-  NavItem,
+  NavItemLink,
+  NavItemButton,
   FooterRow,
 } from "../styles/Sidebar";
 
+const NAV_ITEMS = [
+  { to: "/dashboard", icon: FiHome, label: "Dashboard" },
+  { to: "/accounts", icon: FiLayers, label: "Accounts" },
+  { to: "/analytics", icon: FiBarChart2, label: "Analytics" },
+];
+
 export default function Sidebar() {
-  const { collapsed } = useSidebar();
+  const { collapsed, setCollapsed } = useSidebar();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const auth = useContext(AuthContext);
 
+  const handleNavAction = (path?: string) => {
+    if (path) navigate(path);
+    if (window.innerWidth <= 768) {
+      setCollapsed(true);
+    }
+  };
+
   const handleLogout = () => {
     auth?.logout?.();
-    navigate("/");
+    handleNavAction("/");
   };
 
   return (
     <Aside
       $collapsed={collapsed}
-      animate={{ width: collapsed ? 96 : 260 }}
-      transition={{ duration: 0.24, ease: "easeInOut" }}
+      initial={false}
+      animate={window.innerWidth > 768 ? { width: collapsed ? 80 : 260 } : {}}
+      transition={{
+        type: "spring",
+        stiffness: 400, // Higher = faster snap
+        damping: 40, // Higher = less "bounce"
+        mass: 1,
+      }}
     >
-      {/* Top brand / user */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <BrandRow $collapsed={collapsed}>
-          <div className="brand" />
-          <div className="brandLabel">SyncMate</div>
-        </BrandRow>
-
-        <NavItem
-          to=""
-          $collapsed={collapsed}
-          onClick={(e) => e.preventDefault()}
-        >
-          <FiUser size={18} />
-          <span className="label">
-            {auth?.user?.name ? `Hello, ${auth.user.name}` : "Hello"}
-          </span>
-        </NavItem>
-      </div>
-
-      {/* Nav */}
       <Nav>
-        <NavItem to="/dashboard" $collapsed={collapsed}>
-          <FiHome size={18} />
-          <span className="label">Dashboard</span>
-        </NavItem>
-        <NavItem to="/accounts" $collapsed={collapsed}>
-          <FiLayers size={18} />
-          <span className="label">Accounts</span>
-        </NavItem>
-        <NavItem to="/analytics" $collapsed={collapsed}>
-          <FiBarChart2 size={18} />
-          <span className="label">Analytics</span>
-        </NavItem>
-
-        <NavItem
-          to="#"
+        {/* User Profile Info */}
+        <NavItemLink
+          to="/profile"
           $collapsed={collapsed}
-          onClick={(e) => {
-            e.preventDefault();
-            setSettingsOpen((s) => !s);
-          }}
+          onClick={() => handleNavAction()}
         >
-          <FiSettings size={18} />
-          <span className="label">Settings</span>
-        </NavItem>
-        {/* Settings submenu */}
-        {!collapsed && settingsOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            style={{
-              marginLeft: 43,
-              marginTop: -4,
-              cursor: "pointer",
-              fontSize: 13,
-              color: "red",
-            }}
-            onClick={handleLogout}
+          <FiUser size={20} />
+          <span className="label">{auth?.user?.name || "User"}</span>
+        </NavItemLink>
+
+        {/* Navigation Links */}
+        {NAV_ITEMS.map((item) => (
+          <NavItemLink
+            key={item.to}
+            to={item.to}
+            end
+            $collapsed={collapsed}
+            onClick={() => handleNavAction()}
           >
-            Logout
-          </motion.div>
-        )}
+            <item.icon size={20} />
+            <span className="label">{item.label}</span>
+          </NavItemLink>
+        ))}
+
+        {/* Settings Action */}
+        <NavItemButton
+          $collapsed={collapsed}
+          onClick={() => setSettingsOpen(!settingsOpen)}
+        >
+          <FiSettings size={20} />
+          <span className="label">Settings</span>
+        </NavItemButton>
+
+        <AnimatePresence>
+          {!collapsed && settingsOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              style={{ overflow: "hidden", paddingLeft: 44 }}
+            >
+              <div
+                onClick={handleLogout}
+                style={{
+                  color: "#ef4444",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 0",
+                }}
+              >
+                <FiLogOut size={14} /> Logout
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Nav>
 
-      {/* Footer: theme and version */}
       <FooterRow $collapsed={collapsed}>
-        <div
-          className="theme"
-          onClick={toggle}
-          role="button"
-          aria-label="Toggle theme"
-          style={{ cursor: "pointer" }}
-        >
-          {theme === "light" ? <FiMoon size={16} /> : <FiSun size={16} />}
-          <div className="label">
-            {theme === "light" ? "Dark mode" : "Light mode"}
-          </div>
+        <div className="theme-toggle" onClick={toggle} role="button">
+          {theme === "light" ? <FiMoon size={20} /> : <FiSun size={20} />}
+          {!collapsed && (
+            <span className="label">
+              {theme === "light" ? "Dark Mode" : "Light Mode"}
+            </span>
+          )}
         </div>
-
-        {!collapsed && (
-          <p className="text-sm opacity-70 drop-shadow">v1.0 • built with ♥</p>
-        )}
+        {/*!collapsed && <p className="version">v1.0 • built with ♥</p>*/}
       </FooterRow>
     </Aside>
   );

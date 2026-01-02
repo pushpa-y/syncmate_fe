@@ -6,6 +6,7 @@ declare module "styled-components" {
     name: "light" | "dark";
     bg: string;
     cardBg: string; 
+    sidebarBg: string;
     surface: string;
     text: string;
     muted: string;
