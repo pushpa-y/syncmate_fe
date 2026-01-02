@@ -2,13 +2,10 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/Authcontext";
 import { getEntries } from "../services/Entry";
 import type { Entry } from "../services/Entry";
-import { useAccounts } from "../context/AccountsContext";
-
 import ChartsSection from "../components/charts/ChartsSection";
 
 const Analytics = () => {
   const auth = useContext(AuthContext);
-  const { accounts } = useAccounts(); // 2. Destructure accounts from the hook
   const [entries, setEntries] = useState<Entry[]>([]);
 
   useEffect(() => {
@@ -29,7 +26,7 @@ const Analytics = () => {
     fetchAllEntries();
   }, [auth?.token]);
 
-  return <ChartsSection entries={entries} accounts={accounts} />;
+  return <ChartsSection entries={entries} />;
 };
 
 export default Analytics;
