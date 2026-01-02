@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   PieChart,
   Pie,
@@ -15,6 +15,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Entry } from "../../services/Entry";
+import type { Account } from "../../services/accounts";
+import { CATEGORY_MAP } from "../../constants/categories";
+
 import {
   ChartsGrid,
   ChartCard,
@@ -22,21 +25,27 @@ import {
   MonthButton,
   EmptyState,
   ChartTitle,
+  SummaryContainer,
+  SummaryCard,
+  DropdownMenu,
+  DropdownItem,
+  RelativeWrapper,
 } from "../../styles/ChartsSection";
-import { CATEGORY_MAP } from "../../constants/categories";
 
-/* TYPES */
-type Props = { entries: Entry[] };
-type PieData = { category: string; value: number };
-type TrendData = { date: string; value: number };
+type Props = {
+  entries: Entry[];
+  accounts: Account[];
+};
 
-const COLORS = ["#6366F1", "#22C55E", "#F59E0B", "#EF4444", "#06B6D4"];
+const COLORS = ["#6366F1", "#F59E0B", "#EF4444", "#06B6D4", "#8B5CF6"];
+
 const formatAmount = (value: number) =>
   value >= 100000
     ? `${(value / 100000).toFixed(1)}L`
     : value >= 1000
     ? `${(value / 1000).toFixed(0)}k`
     : value.toString();
+
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-IN", {
     day: "numeric",
@@ -45,13 +54,14 @@ const formatDate = (dateStr: string) =>
 
 function useAnimatedNumber(value: number, duration = 600) {
   const [animated, setAnimated] = useState(0);
-  useMemo(() => {
+  useEffect(() => {
     let start = 0;
-    const increment = value / (duration / 16);
+    const end = value;
+    const increment = end / (duration / 16);
     const timer = setInterval(() => {
       start += increment;
-      if (start >= value) {
-        setAnimated(value);
+      if (start >= end) {
+        setAnimated(end);
         clearInterval(timer);
       } else setAnimated(Math.round(start));
     }, 16);
@@ -60,10 +70,34 @@ function useAnimatedNumber(value: number, duration = 600) {
   return animated;
 }
 
-export default function ChartsSection({ entries }: Props) {
+export default function ChartsSection({ entries, accounts }: Props) {
   const now = new Date();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  /* ---------- LAST 24 MONTHS ---------- */
+  /* ---------- STATE ---------- */
+  const [selectedMonth, setSelectedMonth] = useState({
+    month: now.getMonth(),
+    year: now.getFullYear(),
+    label: now.toLocaleString("en-IN", { month: "short", year: "numeric" }),
+  });
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  /* ---------- CLOSE DROPDOWN ON OUTSIDE CLICK ---------- */
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as any)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* ---------- GENERATE MONTHS ---------- */
   const monthsList = useMemo(() => {
     const months = [];
     for (let i = 0; i < 24; i++) {
@@ -75,161 +109,89 @@ export default function ChartsSection({ entries }: Props) {
       });
     }
     return months;
-  }, [now]);
+  }, []);
 
-  const [selectedMonth, setSelectedMonth] = useState(monthsList[0]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  /* ---------- FILTER & PROCESS DATA ---------- */
+  const processedData = useMemo(() => {
+    const currentMonthEntries = entries.filter((e) => {
+      if (!e.dueDate) return false;
+      const [y, m] = e.dueDate.split("-").map(Number);
 
-  /* ---------- FILTERED ENTRIES ---------- */
-  const filteredEntries = useMemo(
-    () =>
-      entries.filter(
-        (e) =>
-          e.entryType === "expense" &&
-          e.dueDate &&
-          new Date(e.dueDate).getMonth() === selectedMonth.month &&
-          new Date(e.dueDate).getFullYear() === selectedMonth.year
-      ),
-    [entries, selectedMonth]
-  );
+      const isCorrectMonth =
+        m === selectedMonth.month + 1 && y === selectedMonth.year;
+      const isCorrectAccount =
+        selectedAccountId === "all" ||
+        e.accountId === selectedAccountId ||
+        e.fromAccountId === selectedAccountId ||
+        e.toAccountId === selectedAccountId;
 
-  /* ---------- DOUGHNUT DATA ---------- */
-  const expenseData = useMemo<PieData[]>(
-    () =>
-      filteredEntries.reduce((acc, entry) => {
-        const mainCategory =
-          CATEGORY_MAP[entry.category as keyof typeof CATEGORY_MAP]?.parent ??
-          "Other";
-        const found = acc.find((a) => a.category === mainCategory);
-        if (found) found.value += Number(entry.value);
-        else acc.push({ category: mainCategory, value: Number(entry.value) });
-        return acc;
-      }, [] as PieData[]),
-    [filteredEntries]
-  );
-
-  const totalExpense = expenseData.reduce((s, c) => s + c.value, 0);
-  const animatedTotal = useAnimatedNumber(totalExpense);
-
-  const lastMonth = new Date(selectedMonth.year, selectedMonth.month - 1, 1);
-  const lastMonthTotal = useMemo(
-    () =>
-      entries
-        .filter((e) => e.entryType === "expense" && e.dueDate)
-        .reduce((sum, e) => {
-          const d = new Date(e.dueDate!);
-          if (
-            d.getMonth() === lastMonth.getMonth() &&
-            d.getFullYear() === lastMonth.getFullYear()
-          )
-            return sum + Number(e.value);
-          return sum;
-        }, 0),
-    [entries, lastMonth]
-  );
-
-  const percentageChange =
-    lastMonthTotal > 0
-      ? ((totalExpense - lastMonthTotal) / lastMonthTotal) * 100
-      : 0;
-
-  /* ---------- TREND DATA ---------- */
-  const trendData = useMemo(
-    () =>
-      filteredEntries
-        .reduce<TrendData[]>((acc, entry) => {
-          const date = entry.dueDate!.split("T")[0];
-          const found = acc.find((a) => a.date === date);
-          if (found) found.value += Number(entry.value);
-          else acc.push({ date, value: Number(entry.value) });
-          return acc;
-        }, [])
-        .sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-        ),
-    [filteredEntries]
-  );
-
-  /* ---------- BAR DATA ---------- */
-  const barData = useMemo(() => {
-    const { month, year } = selectedMonth;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const map = new Map(
-      filteredEntries.map((e) => [e.dueDate!.split("T")[0], Number(e.value)])
-    );
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const date = new Date(year, month, i + 1);
-      const key = date.toISOString().split("T")[0];
-      return { date: key, value: map.get(key) ?? 0 };
+      return isCorrectMonth && isCorrectAccount;
     });
-  }, [filteredEntries, selectedMonth]);
 
-  /* ---------- EMPTY STATE ---------- */
-  if (filteredEntries.length === 0) {
-    return (
-      <>
-        <MonthSelector
-          style={{ display: "flex", gap: "8px", position: "relative" }}
-        >
-          {/* This Month & Last Month */}
-          {monthsList.slice(0, 2).map((m) => (
-            <MonthButton
-              key={m.label}
-              $active={m.label === selectedMonth.label}
-              onClick={() => setSelectedMonth(m)}
-            >
-              {m.label}
-            </MonthButton>
-          ))}
+    const expMap: Record<string, number> = {};
+    const incMap: Record<string, number> = {};
+    const trendMap: Record<string, { income: number; expense: number }> = {};
 
-          {/* Dropdown container */}
-          <div style={{ position: "relative" }}>
-            <MonthButton $active={false} onClick={() => setDropdownOpen(!dropdownOpen)}>⋯</MonthButton>
+    currentMonthEntries.forEach((e) => {
+      const val = Number(e.value) || 0;
+      const meta = CATEGORY_MAP[e.category as keyof typeof CATEGORY_MAP];
+      const parentName = meta?.parent || "Other";
+      const dateKey = e.dueDate!;
 
-            {dropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  background: "#fff",
-                  border: "1px solid #ccc",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                  zIndex: 100,
-                  minWidth: 120,
-                }}
-              >
-                {monthsList.slice(2).map((m) => (
-                  <div
-                    key={m.label}
-                    style={{
-                      padding: 6,
-                      cursor: "pointer",
-                      background:
-                        m.label === selectedMonth.label ? "#eee" : "#fff",
-                    }}
-                    onClick={() => {
-                      setSelectedMonth(m);
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    {m.label}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </MonthSelector>
+      if (!trendMap[dateKey]) trendMap[dateKey] = { income: 0, expense: 0 };
 
-        <EmptyState>📭 No entries yet</EmptyState>
-      </>
-    );
-  }
+      if (e.entryType === "expense") {
+        expMap[parentName] = (expMap[parentName] || 0) + val;
+        trendMap[dateKey].expense += val;
+      } else if (e.entryType === "income") {
+        incMap[parentName] = (incMap[parentName] || 0) + val;
+        trendMap[dateKey].income += val;
+      }
+    });
+
+    return {
+      filteredEntries: currentMonthEntries,
+      expenseByCat: Object.entries(expMap)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value),
+      totalIn: Object.values(incMap).reduce((a, b) => a + b, 0),
+      totalOut: Object.values(expMap).reduce((a, b) => a + b, 0),
+      trendData: Object.entries(trendMap)
+        .map(([date, vals]) => ({ date, ...vals }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    };
+  }, [entries, selectedMonth, selectedAccountId]);
+
+  const { filteredEntries, expenseByCat, totalIn, totalOut, trendData } =
+    processedData;
+  const animatedIn = useAnimatedNumber(totalIn);
+  const animatedOut = useAnimatedNumber(totalOut);
+  const netSavings = totalIn - totalOut;
 
   return (
     <>
+      {/* 1. ACCOUNT FILTER CHIPS */}
+      <MonthSelector style={{ flexWrap: "wrap", marginBottom: "10px" }}>
+        <MonthButton
+          $active={selectedAccountId === "all"}
+          onClick={() => setSelectedAccountId("all")}
+        >
+          All Accounts
+        </MonthButton>
+        {accounts.map((acc) => (
+          <MonthButton
+            key={acc._id}
+            $active={selectedAccountId === acc._id}
+            onClick={() => setSelectedAccountId(acc._id)}
+          >
+            {acc.name}
+          </MonthButton>
+        ))}
+      </MonthSelector>
+
+      {/* 2. MONTH SELECTOR */}
       <MonthSelector>
-        {monthsList.slice(0, 2).map((m) => (
+        {monthsList.slice(0, 3).map((m) => (
           <MonthButton
             key={m.label}
             $active={m.label === selectedMonth.label}
@@ -238,129 +200,160 @@ export default function ChartsSection({ entries }: Props) {
             {m.label}
           </MonthButton>
         ))}
-        <MonthButton
-          $active={false}
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-        >
-          ⋯
-        </MonthButton>
-        {dropdownOpen && (
-          <div
-            style={{
-              position: "absolute",
-              background: "#fff",
-              border: "1px solid #ccc",
-              marginTop: 4,
-            }}
+        <RelativeWrapper ref={dropdownRef}>
+          <MonthButton
+            $active={false}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            {monthsList.slice(2).map((m) => (
-              <div
-                key={m.label}
-                style={{
-                  padding: 6,
-                  cursor: "pointer",
-                  background: m.label === selectedMonth.label ? "#eee" : "#fff",
-                }}
-                onClick={() => {
-                  setSelectedMonth(m);
-                  setDropdownOpen(false);
-                }}
-              >
-                {m.label}
-              </div>
-            ))}
-          </div>
-        )}
+            ⋯
+          </MonthButton>
+          {dropdownOpen && (
+            <DropdownMenu>
+              {monthsList.slice(3, 15).map((m) => (
+                <DropdownItem
+                  key={m.label}
+                  onClick={() => {
+                    setSelectedMonth(m);
+                    setDropdownOpen(false);
+                  }}
+                >
+                  {m.label}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          )}
+        </RelativeWrapper>
       </MonthSelector>
 
-      <ChartsGrid>
-        {/* DOUGHNUT */}
-        <ChartCard>
-          <ChartTitle>Expenses by Category</ChartTitle>
-          <PieChart width={300} height={320}>
-            <Pie
-              data={expenseData}
-              dataKey="value"
-              nameKey="category"
-              cx="50%"
-              cy="50%"
-              outerRadius={110}
-              innerRadius={70}
-            >
-              {expenseData.map((_, i) => (
-                <Cell key={i} fill={COLORS[i % COLORS.length]} />
-              ))}
-            </Pie>
-            <text
-              x={150}
-              y={110}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={20}
-              fontWeight={600}
-              fill="#111827"
-            >
-              ₹{formatAmount(animatedTotal)}
-            </text>
-            <text
-              x={150}
-              y={130}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={12}
-              fill={percentageChange >= 0 ? "#16a34a" : "#dc2626"}
-            >
-              {percentageChange >= 0 ? "▲" : "▼"}{" "}
-              {Math.abs(percentageChange).toFixed(1)}% vs last month
-            </text>
-            <Tooltip formatter={(v: number) => formatAmount(v)} />
-            <Legend iconType="circle" />
-          </PieChart>
-        </ChartCard>
+      {filteredEntries.length === 0 ? (
+        <EmptyState>📭 No data found for {selectedMonth.label}</EmptyState>
+      ) : (
+        <>
+          {/* 3. CASH FLOW SUMMARY */}
+          <SummaryContainer>
+            <SummaryCard $color="#22C55E">
+              <p>Total Income</p>
+              <h3>₹{animatedIn.toLocaleString()}</h3>
+            </SummaryCard>
+            <SummaryCard $color="#EF4444">
+              <p>Total Expense</p>
+              <h3>₹{animatedOut.toLocaleString()}</h3>
+            </SummaryCard>
+            <SummaryCard $color="#6366F1">
+              <p>Net Balance</p>
+              <h3>₹{netSavings.toLocaleString()}</h3>
+            </SummaryCard>
+          </SummaryContainer>
 
-        {/* LINE */}
-        <ChartCard>
-          <ChartTitle>Spending Trend</ChartTitle>
-          <LineChart width={420} height={280} data={trendData}>
-            <XAxis dataKey="date" tickFormatter={formatDate} />
-            <YAxis tickFormatter={formatAmount} />
-            <Tooltip formatter={(v: number) => formatAmount(v)} />
-            <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="#6366F1"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ChartCard>
+          <ChartsGrid>
+            {/* 4. PIE CHART */}
+            <ChartCard>
+              <ChartTitle>Expense Distribution</ChartTitle>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={expenseByCat}
+                    dataKey="value"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                  >
+                    {expenseByCat.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: any) => `₹${v.toLocaleString()}`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-        {/* BAR */}
-        <ChartCard className="md:col-span-2">
-          <ChartTitle>Daily Expenses</ChartTitle>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={barData} barCategoryGap={12}>
-              <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
-              <XAxis
-                dataKey="date"
-                interval={0}
-                tickFormatter={formatDate}
-                tick={{ fontSize: 9, fill: "#6B7280" }}
-              />
-              <YAxis />
-              <Tooltip formatter={(v: number) => `₹${v}`} />
-              <Bar
-                dataKey="value"
-                fill="#22C55E"
-                barSize={22}
-                background={{ fill: "#E5E7EB" }}
-                radius={[3, 3, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </ChartsGrid>
+            {/* 5. TREND LINE */}
+            <ChartCard>
+              <ChartTitle>Income vs Expense Trend</ChartTitle>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trendData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#f0f0f0"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={formatDate}
+                    fontSize={10}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={formatAmount}
+                    fontSize={10}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="#EF4444"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#22C55E"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            {/* 6. HORIZONTAL BAR CHART */}
+            <ChartCard style={{ gridColumn: "1 / -1" }}>
+              <ChartTitle>Spending by Category</ChartTitle>
+              <ResponsiveContainer
+                width="100%"
+                height={Math.max(expenseByCat.length * 45, 250)}
+              >
+                <BarChart
+                  layout="vertical"
+                  data={expenseByCat}
+                  margin={{ left: 20, right: 40 }}
+                >
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={100}
+                    fontSize={12}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "#f8fafc" }}
+                    formatter={(v: any) => `₹${v.toLocaleString()}`}
+                  />
+                  <Bar
+                    dataKey="value"
+                    fill="#6366F1"
+                    radius={[0, 4, 4, 0]}
+                    barSize={24}
+                    label={{
+                      position: "right",
+                      formatter: (v: any) =>
+                        typeof v === "number" ? `₹${formatAmount(v)}` : v,
+                      fontSize: 11,
+                      fill: "#6B7280",
+                    }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </ChartsGrid>
+        </>
+      )}
     </>
   );
 }

@@ -134,18 +134,22 @@ export default function EntryFormCreate({
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="">Category</option>
-          {CATEGORIES.filter((c) => !c.parentId).map((main) => (
-            <optgroup key={main.id} label={`${main.icon || ""} ${main.name}`}>
-              {CATEGORIES.filter((sub) => sub.parentId === main.id).map(
-                (sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.icon || ""} {sub.name}
-                  </option>
-                )
-              )}
-            </optgroup>
-          ))}
+          <option value="">Select Category</option>
+          {CATEGORIES
+            // 1. Get main categories (no parentId)
+            // 2. Filter by the current entryType (income vs expense)
+            .filter((c) => !c.parentId && c.type === entryType)
+            .map((main) => (
+              <optgroup key={main.id} label={`${main.icon} ${main.name}`}>
+                {CATEGORIES.filter((sub) => sub.parentId === main.id).map(
+                  (sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.icon} {sub.name}
+                    </option>
+                  )
+                )}
+              </optgroup>
+            ))}
         </select>
       )}
 

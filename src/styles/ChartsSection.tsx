@@ -43,15 +43,13 @@ export const MonthButton = styled.button<{ $active: boolean }>`
   cursor: pointer;
   font-size: 14px;
 
-  background: ${({ $active }) =>
-    $active ? "#6366f1" : "rgba(0,0,0,0.06)"};
+  background: ${({ $active }) => ($active ? "#6366f1" : "rgba(0,0,0,0.06)")};
   color: ${({ $active }) => ($active ? "white" : "#333")};
 
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${({ $active }) =>
-      $active ? "#4f46e5" : "rgba(0,0,0,0.1)"};
+    background: ${({ $active }) => ($active ? "#4f46e5" : "rgba(0,0,0,0.1)")};
   }
 `;
 export const ChartTitle = styled.h3`
@@ -66,4 +64,59 @@ export const EmptyState = styled.div`
   padding: 60px 20px;
   color: #6b7280;
   font-size: 16px;
+`;
+export const SummaryContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+`;
+
+export const SummaryCard = styled(ChartCard)<{ $color: string }>`
+  min-height: auto;
+  align-items: flex-start;
+  padding: 16px;
+  border-left: 4px solid ${({ $color }) => $color};
+  gap: 4px;
+
+  p {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    color: ${({ $color }) => $color};
+    margin: 0;
+  }
+`;
+
+export const DropdownMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  z-index: 100;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 140px;
+`;
+
+export const DropdownItem = styled.div`
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
+export const RelativeWrapper = styled.div`
+  position: relative;
 `;

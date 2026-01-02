@@ -129,26 +129,26 @@ export default function EntryFormEdit({
       </div>
 
       {/* Category */}
-      {editEntryType !== "transfer" && (
-        <select
-          required
-          value={editCategory}
-          onChange={(e) => setEditCategory(e.target.value)}
-        >
-          <option value="">Category</option>
-          {CATEGORIES.filter((c) => !c.parentId).map((main) => (
-            <optgroup key={main.id} label={`${main.icon || ""} ${main.name}`}>
-              {CATEGORIES.filter((sub) => sub.parentId === main.id).map(
-                (sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.icon || ""} {sub.name}
-                  </option>
-                )
-              )}
-            </optgroup>
+{editEntryType !== "transfer" && (
+  <select
+    required
+    value={editCategory}
+    onChange={(e) => setEditCategory(e.target.value)}
+  >
+    <option value="">Select Category</option>
+    {CATEGORIES
+      .filter((c) => !c.parentId && c.type === editEntryType)
+      .map((main) => (
+        <optgroup key={main.id} label={`${main.icon} ${main.name}`}>
+          {CATEGORIES.filter((sub) => sub.parentId === main.id).map((sub) => (
+            <option key={sub.id} value={sub.id}>
+              {sub.icon} {sub.name}
+            </option>
           ))}
-        </select>
-      )}
+        </optgroup>
+      ))}
+  </select>
+)}
 
       {/* Actions */}
       <div className="actions mt-4">

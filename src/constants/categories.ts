@@ -3,130 +3,153 @@ export interface Category {
   name: string;
   parentId?: string;
   icon: string;
+  type: "income" | "expense";
 }
 
 export const CATEGORIES: Category[] = [
+  // --- INCOME CATEGORIES ---
+  { id: "inc_main", name: "Income", icon: "💰", type: "income" },
+  {
+    id: "salary",
+    name: "Salary",
+    parentId: "inc_main",
+    icon: "💼",
+    type: "income",
+  },
+  {
+    id: "freelance",
+    name: "Freelance",
+    parentId: "inc_main",
+    icon: "💻",
+    type: "income",
+  },
+  {
+    id: "investment",
+    name: "Investments",
+    parentId: "inc_main",
+    icon: "📈",
+    type: "income",
+  },
+  {
+    id: "gift",
+    name: "Gifts/Other",
+    parentId: "inc_main",
+    icon: "🎁",
+    type: "income",
+  },
+
+  // --- EXPENSE CATEGORIES ---
   // FOOD & DRINKS
-  { id: "food", name: "Food & Drinks", icon: "🍔" },
-  { id: "food_groceries", name: "Groceries", parentId: "food", icon: "🛒" },
-  { id: "food_cafe", name: "Cafe", parentId: "food", icon: "☕" },
-  { id: "food_restaurant", name: "Restaurant", parentId: "food", icon: "🍽" },
-  { id: "food_bar", name: "Bar", parentId: "food", icon: "🍺" },
+  { id: "food", name: "Food & Drinks", icon: "🍔", type: "expense" },
+  {
+    id: "food_groceries",
+    name: "Groceries",
+    parentId: "food",
+    icon: "🛒",
+    type: "expense",
+  },
+  {
+    id: "food_cafe",
+    name: "Cafe",
+    parentId: "food",
+    icon: "☕",
+    type: "expense",
+  },
+  {
+    id: "food_restaurant",
+    name: "Restaurant",
+    parentId: "food",
+    icon: "🍽",
+    type: "expense",
+  },
+  {
+    id: "food_bar",
+    name: "Bar",
+    parentId: "food",
+    icon: "🍺",
+    type: "expense",
+  },
 
   // SHOPPING
-  { id: "shopping", name: "Shopping", icon: "🛍" },
-  { id: "shopping_clothes", name: "Clothes", parentId: "shopping", icon: "👗" },
-  { id: "shopping_shoes", name: "Shoes", parentId: "shopping", icon: "👟" },
-  { id: "shopping_electronics", name: "Electronics", parentId: "shopping", icon: "📱" },
+  { id: "shopping", name: "Shopping", icon: "🛍", type: "expense" },
+  {
+    id: "shopping_clothes",
+    name: "Clothes",
+    parentId: "shopping",
+    icon: "👗",
+    type: "expense",
+  },
+  {
+    id: "shopping_electronics",
+    name: "Electronics",
+    parentId: "shopping",
+    icon: "📱",
+    type: "expense",
+  },
 
   // TRANSPORT
-  { id: "transport", name: "Transport", icon: "🚗" },
-  { id: "transport_fuel", name: "Fuel", parentId: "transport", icon: "⛽" },
-  { id: "transport_bus", name: "Bus / Train", parentId: "transport", icon: "🚌" },
-  { id: "transport_taxi", name: "Taxi", parentId: "transport", icon: "🚕" },
+  { id: "transport", name: "Transport", icon: "🚗", type: "expense" },
+  {
+    id: "transport_fuel",
+    name: "Fuel",
+    parentId: "transport",
+    icon: "⛽",
+    type: "expense",
+  },
+  {
+    id: "transport_taxi",
+    name: "Taxi",
+    parentId: "transport",
+    icon: "🚕",
+    type: "expense",
+  },
 
   // FINANCIAL
-  { id: "financial", name: "Financial Expenses", icon: "💳" },
-  { id: "financial_rent", name: "Rent", parentId: "financial", icon: "🏠" },
-  { id: "financial_bills", name: "Bills", parentId: "financial", icon: "📄" },
-  { id: "financial_insurance", name: "Insurance", parentId: "financial", icon: "🛡" },
+  { id: "financial", name: "Financial Expenses", icon: "💳", type: "expense" },
+  {
+    id: "financial_rent",
+    name: "Rent",
+    parentId: "financial",
+    icon: "🏠",
+    type: "expense",
+  },
+  {
+    id: "financial_bills",
+    name: "Bills",
+    parentId: "financial",
+    icon: "📄",
+    type: "expense",
+  },
 
   // ENTERTAINMENT
-  { id: "entertainment", name: "Entertainment", icon: "🎉" },
-  { id: "entertainment_movies", name: "Movies", parentId: "entertainment", icon: "🎬" },
-  { id: "entertainment_games", name: "Games", parentId: "entertainment", icon: "🎮" },
+  { id: "entertainment", name: "Entertainment", icon: "🎉", type: "expense" },
+  {
+    id: "entertainment_movies",
+    name: "Movies",
+    parentId: "entertainment",
+    icon: "🎬",
+    type: "expense",
+  },
 ];
 
-export const CATEGORY_MAP = {
-  // FOOD
-  food_groceries: {
-    label: "Groceries",
-    emoji: "🛒",
-    parent: "Food & Drinks",
-  },
-  food_cafe: {
-    label: "Cafe",
-    emoji: "☕",
-    parent: "Food & Drinks",
-  },
-  food_restaurant: {
-    label: "Restaurant",
-    emoji: "🍽",
-    parent: "Food & Drinks",
-  },
-  food_bar: {
-    label: "Bar",
-    emoji: "🍺",
-    parent: "Food & Drinks",
-  },
+/**
+ * AUTO-GENERATED MAP
+ * This builds your CATEGORY_MAP automatically from the array above
+ */
+export const CATEGORY_MAP: Record<
+  string,
+  { label: string; emoji: string; parent: string }
+> = CATEGORIES.reduce((acc, cat) => {
+  if (cat.parentId) {
+    const parentCat = CATEGORIES.find((p) => p.id === cat.parentId);
+    acc[cat.id] = {
+      label: cat.name,
+      emoji: cat.icon,
+      parent: parentCat ? parentCat.name : "Other",
+    };
+  }
+  return acc;
+}, {} as any);
 
-  // SHOPPING
-  shopping_clothes: {
-    label: "Clothes",
-    emoji: "👗",
-    parent: "Shopping",
-  },
-  shopping_shoes: {
-    label: "Shoes",
-    emoji: "👟",
-    parent: "Shopping",
-  },
-  shopping_electronics: {
-    label: "Electronics",
-    emoji: "📱",
-    parent: "Shopping",
-  },
-
-  // TRANSPORT
-  transport_fuel: {
-    label: "Fuel",
-    emoji: "⛽",
-    parent: "Transport",
-  },
-  transport_bus: {
-    label: "Bus / Train",
-    emoji: "🚌",
-    parent: "Transport",
-  },
-  transport_taxi: {
-    label: "Taxi",
-    emoji: "🚕",
-    parent: "Transport",
-  },
-
-  // FINANCIAL
-  financial_rent: {
-    label: "Rent",
-    emoji: "🏠",
-    parent: "Financial Expenses",
-  },
-  financial_bills: {
-    label: "Bills",
-    emoji: "📄",
-    parent: "Financial Expenses",
-  },
-  financial_insurance: {
-    label: "Insurance",
-    emoji: "🛡",
-    parent: "Financial Expenses",
-  },
-
-  // ENTERTAINMENT
-  entertainment_movies: {
-    label: "Movies",
-    emoji: "🎬",
-    parent: "Entertainment",
-  },
-  entertainment_games: {
-    label: "Games",
-    emoji: "🎮",
-    parent: "Entertainment",
-  },
-
-  // FALLBACK
-  other: {
-    label: "Other",
-    emoji: "📦",
-    parent: "Other",
-  },
-} as const;
+// Add fallback manually
+CATEGORY_MAP["other"] = { label: "Other", emoji: "📦", parent: "Other" };

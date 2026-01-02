@@ -75,27 +75,24 @@ const Dashboard = () => {
   // --- Fetch entries ---
   const fetchEntries = async (p = 1) => {
     if (!auth?.token) return;
-
     try {
-      // FIX: Only send an ID if activeAccount is a real ID and NOT "all"
-      const accountIdToSend =
-        activeAccount && activeAccount !== "all" && activeAccount !== ""
-          ? activeAccount
-          : undefined;
+      // If it's "all" or null, we want the backend to give us EVERYTHING
+      const accountIdToQuery =
+        activeAccount === "all" || !activeAccount ? undefined : activeAccount;
 
       const res = await getEntries(auth.token, {
         page: p,
         limit: PER_PAGE,
         sortBy,
         category: categoryFilter,
-        accountId: accountIdToSend, // If undefined, Backend should return all user entries
+        accountId: accountIdToQuery, // This will now be undefined for "All Accounts"
       });
 
       setEntries(res.data.entries);
       setPage(res.data.page);
       setPages(res.data.pages);
     } catch (err) {
-      console.error("Error fetching entries:", err);
+      console.error(err);
     }
   };
 
@@ -286,7 +283,7 @@ const Dashboard = () => {
   return (
     <>
       <AccountsContainer />
-      <ChartsSection entries={entries} />
+      <ChartsSection entries={entries} accounts={accounts} />
 
       <FiltersBar
         sortBy={sortBy}

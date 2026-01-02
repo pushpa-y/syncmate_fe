@@ -28,6 +28,15 @@ export const AccountsProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem("activeAccount") || null;
   });
 
+// Change your setter to handle localStorage automatically
+const handleSetActiveAccount = (id: string | null) => {
+  setActiveAccount(id);
+  if (id) {
+    localStorage.setItem("activeAccount", id);
+  } else {
+    localStorage.removeItem("activeAccount");
+  }
+};
   const reload = async () => {
     if (!auth?.token) return;
     const res = await API.getAccounts(auth.token);
@@ -114,7 +123,7 @@ export const AccountsProvider = ({ children }: { children: ReactNode }) => {
         accounts,
         setAccounts,
         activeAccount,
-        setActiveAccount,
+        setActiveAccount: handleSetActiveAccount,
         reload,
         create,
         updateAccount,
