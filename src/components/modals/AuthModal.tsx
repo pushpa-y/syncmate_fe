@@ -101,7 +101,7 @@ const AuthModal = ({ onClose, initialMode = "login" }: AuthModalProps) => {
     } catch (err: any) {
       const msg = err.response?.data?.message || "Something went wrong";
       setError(msg);
-      toast.error(msg); // Error popup
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

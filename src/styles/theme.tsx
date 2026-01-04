@@ -17,18 +17,18 @@ export const lightTheme: DefaultTheme = {
 
 export const darkTheme: DefaultTheme = {
   name: "dark",
-  bg: "linear-gradient(180deg, #0b1220 0%, #071021 100%)",
-  surface: "rgba(10,11,15,0.4)",
+  bg: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+  surface: "rgba(30, 41, 59, 0.4)",
   text: "#e6eef8",
   muted: "#94a3b8",
   accent: "#7c3aed",
-  glassBorder: "rgba(255,255,255,0.06)",
+  glassBorder: "rgba(255, 255, 255, 0.08)",
   cardShadow: "0 10px 30px rgba(2,6,23,0.6)",
-  cardBg: "rgba(20,25,35,0.6)",
+  cardBg: "rgba(23, 30, 48, 0.7)",
   sidebarBg: "rgba(15,20,30,0.95)",
 };
 
-export const GlobalStyle = createGlobalStyle<{theme:any}>`
+export const GlobalStyle = createGlobalStyle<{ theme: any }>`
   html,body,#root { height:100%; }
   body {
     margin: 0;

@@ -65,14 +65,14 @@ export const MonthButton = styled.button<{ $active: boolean }>`
   cursor: pointer;
   font-size: 14px;
   white-space: nowrap;
-
-  background: ${({ $active }) => ($active ? "#6366f1" : "rgba(0,0,0,0.06)")};
-  color: ${({ $active }) => ($active ? "white" : "#333")};
-
   transition: all 0.2s ease;
 
+  background: ${({ $active, theme }) =>
+    $active ? theme.accent : theme.surface};
+  color: ${({ $active, theme }) => ($active ? "#fff" : theme.text)};
+
   &:hover {
-    background: ${({ $active }) => ($active ? "#4f46e5" : "rgba(0,0,0,0.1)")};
+    filter: brightness(1.2);
   }
 `;
 export const ChartTitle = styled.h3`
@@ -85,7 +85,7 @@ export const ChartTitle = styled.h3`
 export const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  color: #6b7280;
+  color: ${(props) => props.theme.text};
   font-size: 16px;
 `;
 export const SummaryContainer = styled.div`
@@ -112,8 +112,9 @@ export const SummaryCard = styled(ChartCard)<{ $color: string }>`
 
   p {
     font-size: 12px;
-    color: #6b7280;
+    color: ${(props) => props.theme.muted};
     margin: 0;
+    font-weight: 500;
   }
 
   h3 {
@@ -127,7 +128,7 @@ export const DropdownMenu = styled.div`
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  background: ${(props) => props.theme.sidebarBg};
   z-index: 100;
   border: 1px solid #eee;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

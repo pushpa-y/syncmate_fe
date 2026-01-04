@@ -13,10 +13,10 @@ export const Overlay = styled.div`
 `;
 
 export const Modal = styled.div`
- position: relative;
+  position: relative;
   width: 760px;
   height: 460px;
-  background: #fff;
+  background: #ffffff;
   border-radius: 16px;
   display: flex;
   overflow: hidden;
@@ -44,6 +44,7 @@ export const FormSection = styled.div`
 export const BrandTitle = styled.h1`
   font-size: 26px;
   font-weight: 700;
+  color: #1e293b;
   margin-bottom: 6px;
 `;
 
@@ -55,6 +56,7 @@ export const BrandSubtitle = styled.p`
 
 export const Title = styled.h2`
   font-size: 18px;
+  color: #1e293b;
   margin-bottom: 16px;
 `;
 
@@ -65,6 +67,8 @@ export const Input = styled.input`
   border-radius: 8px;
   border: 1px solid #d1d5db;
   font-size: 14px;
+  background: #ffffff;
+  color: #1e293b;
 
   &:focus {
     outline: none;
@@ -87,7 +91,7 @@ export const Button = styled.button`
   &:hover {
     opacity: 0.9;
   }
-    &:disabled {
+  &:disabled {
     background: #a5a6f6;
     cursor: not-allowed;
   }

@@ -14,7 +14,6 @@ export default function AccountsList({
     <div className="space-y-2">
       <div className="flex gap-2 items-center">
         <h4 className="font-semibold">Accounts</h4>
-        {/* Add button handled elsewhere (opens modal) */}
       </div>
       <div className="flex flex-col gap-2">
         <button

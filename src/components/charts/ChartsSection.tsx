@@ -27,6 +27,7 @@ import {
 import type { Entry } from "../../services/Entry";
 import { CATEGORY_MAP } from "../../constants/categories";
 
+import { useTheme } from "styled-components";
 import {
   ChartsContainer,
   FilterSection,
@@ -54,8 +55,8 @@ const formatAmount = (value: number) =>
   value >= 100000
     ? `${(value / 100000).toFixed(1)}L`
     : value >= 1000
-    ? `${(value / 1000).toFixed(0)}k`
-    : value.toString();
+      ? `${(value / 1000).toFixed(0)}k`
+      : value.toString();
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-IN", {
@@ -82,6 +83,7 @@ function useAnimatedNumber(value: number, duration = 600) {
 }
 
 export default function ChartsSection({ entries }: Props) {
+  const theme = useTheme();
   const dispatch = useDispatch();
   const auth = useContext(AuthContext);
 
@@ -292,7 +294,7 @@ export default function ChartsSection({ entries }: Props) {
                     <Label
                       value={`₹${animatedTotal.toLocaleString()}`}
                       position="center"
-                      fill="#0f172a"
+                      fill={theme.text}
                       style={{
                         fontSize: "22px",
                         fontWeight: "700",
@@ -303,7 +305,7 @@ export default function ChartsSection({ entries }: Props) {
                       value="Total Balance"
                       position="center"
                       dy={24}
-                      fill="#64748b"
+                      fill={theme.muted}
                       style={{
                         fontSize: "11px",
                         fontWeight: "500",
@@ -311,7 +313,16 @@ export default function ChartsSection({ entries }: Props) {
                       }}
                     />
                   </Pie>
-                  <Tooltip formatter={(v: any) => `₹${v.toLocaleString()}`} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: theme.sidebarBg,
+                      borderColor: theme.glassBorder,
+                      color: theme.text,
+                      borderRadius: "8px",
+                    }}
+                    itemStyle={{ color: theme.text }}
+                    formatter={(v: any) => `₹${v.toLocaleString()}`}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -325,7 +336,7 @@ export default function ChartsSection({ entries }: Props) {
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
-                    stroke="#f0f0f0"
+                    stroke={theme.glassBorder}
                   />
                   <XAxis
                     dataKey="date"
@@ -382,7 +393,7 @@ export default function ChartsSection({ entries }: Props) {
                   />
                   <Bar
                     dataKey="value"
-                    fill="#6366F1"
+                    fill={theme.accent}
                     radius={[0, 4, 4, 0]}
                     barSize={24}
                     label={{
@@ -390,7 +401,7 @@ export default function ChartsSection({ entries }: Props) {
                       formatter: (v: any) =>
                         typeof v === "number" ? `₹${formatAmount(v)}` : v,
                       fontSize: 11,
-                      fill: "#6B7280",
+                      fill: theme.muted,
                     }}
                   />
                 </BarChart>

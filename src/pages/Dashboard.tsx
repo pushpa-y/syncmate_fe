@@ -27,8 +27,9 @@ import { FloatingAddButton } from "../styles/Dashboard";
 const DashboardRoot = styled.div`
   width: 100%;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background: ${(props) => props.theme.bg};
   overflow-x: hidden;
+  transition: background 0.25s ease;
 `;
 
 const DashboardGrid = styled.div`
@@ -40,6 +41,7 @@ const DashboardGrid = styled.div`
   flex-direction: column;
   gap: 20px;
   box-sizing: border-box;
+  background: transparent;
 
   @media (max-width: 768px) {
     padding: 12px;
@@ -76,10 +78,10 @@ const Dashboard = () => {
   // Create Form State
   const [value, setValue] = useState("");
   const [entryType, setEntryType] = useState<"income" | "expense" | "transfer">(
-    "expense"
+    "expense",
   );
   const [dueDate, setDueDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
@@ -154,7 +156,7 @@ const Dashboard = () => {
       else
         applyBalanceChange(
           activeAccount!,
-          entryType === "income" ? Number(value) : -Number(value)
+          entryType === "income" ? Number(value) : -Number(value),
         );
 
       setValue("");
@@ -176,14 +178,14 @@ const Dashboard = () => {
       moveBalanceBetweenAccounts(
         entry.toAccount!,
         entry.fromAccount!,
-        Number(entry.value)
+        Number(entry.value),
       );
     else
       applyBalanceDelete(
         entry.baseAccount!,
         entry.entryType === "income"
           ? Number(entry.value)
-          : -Number(entry.value)
+          : -Number(entry.value),
       );
     setEntries((prev) => prev.filter((e) => e._id !== id));
     syncBalances();
@@ -276,7 +278,7 @@ const Dashboard = () => {
           entryType={entryType}
           setEntryType={setEntryType}
           accountId={
-            activeAccount === "all" ? undefined : activeAccount ?? undefined
+            activeAccount === "all" ? undefined : (activeAccount ?? undefined)
           }
           setAccountId={setActiveAccount}
           fromAccountId={fromAccount}
