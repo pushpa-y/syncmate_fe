@@ -351,7 +351,17 @@ export default function ChartsSection({ entries }: Props) {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: theme.cardBg,
+                      border: `1px solid ${theme.glassBorder}`,
+                      borderRadius: "8px",
+                      color: theme.text,
+                      fontSize: "12px",
+                    }}
+                    itemStyle={{ color: theme.text }}
+                    labelStyle={{ color: theme.muted, marginBottom: "4px" }}
+                  />
                   <Line
                     type="monotone"
                     dataKey="expense"
@@ -388,7 +398,14 @@ export default function ChartsSection({ entries }: Props) {
                     tickLine={false}
                   />
                   <Tooltip
-                    cursor={{ fill: "#f8fafc" }}
+                    contentStyle={{
+                      backgroundColor: "#1e293b",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      color: "#f8fafc",
+                    }}
+                    itemStyle={{ color: "#f8fafc" }}
+                    cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
                     formatter={(v: any) => `₹${v.toLocaleString()}`}
                   />
                   <Bar

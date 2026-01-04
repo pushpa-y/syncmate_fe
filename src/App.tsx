@@ -14,6 +14,7 @@ import { SidebarProvider } from "./context/SidebarContext";
 
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import AccountsPage from "./pages/AccountsPage";
 import Analytics from "./pages/Analytics";
 import AppLayout from "./layouts/AppLayout";
@@ -33,6 +34,7 @@ createRoot(document.getElementById("root")!).render(
                   <Route path="/" element={<Home />} />
                   <Route element={<AppLayout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/profile" element={<Profile />} />
                     <Route path="/accounts" element={<AccountsPage />} />
                     <Route path="/analytics" element={<Analytics />} />
                   </Route>
@@ -43,5 +45,5 @@ createRoot(document.getElementById("root")!).render(
         </SidebarProvider>
       </ThemeProvider>
     </Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

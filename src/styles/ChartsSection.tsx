@@ -78,7 +78,7 @@ export const MonthButton = styled.button<{ $active: boolean }>`
 export const ChartTitle = styled.h3`
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: ${(props) => props.theme.text};
   margin-bottom: 4px;
 `;
 
