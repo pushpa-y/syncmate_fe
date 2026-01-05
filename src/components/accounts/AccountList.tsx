@@ -1,14 +1,14 @@
-import { useAccounts } from "../../context/AccountsContext";
+import { selectAccounts } from "../../redux/selectors/appSelectors";
 import type { Account } from "../../services/accounts";
+import { useSelector } from "react-redux";
 
-export default function AccountsList({
-  activeId,
-  onSelect,
-}: {
+type Props = {
   activeId?: string;
   onSelect: (id?: string) => void;
-}) {
-  const { accounts } = useAccounts();
+};
+
+export default function AccountsList({ activeId, onSelect }: Props) {
+  const accounts = useSelector(selectAccounts);
 
   return (
     <div className="space-y-2">

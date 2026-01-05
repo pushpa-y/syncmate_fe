@@ -1,5 +1,14 @@
-import { useState, useEffect } from "react";
-import { useAccounts } from "../../context/AccountsContext";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectAccounts,
+  selectActiveAccount,
+} from "../../redux/selectors/appSelectors";
+import {
+  deleteAccount,
+  updateAccount,
+  setActiveAccount,
+} from "../../redux/actions/accountActions";
 import type { Account } from "../../services/accounts";
 
 import {
@@ -9,8 +18,10 @@ import {
   DotsWrapper,
   AccountMenu,
   MenuItem,
+  MenuItemDanger,
   AddAccountButton,
   AllAccountsLink,
+  SelectAllWrapper,
 } from "../../styles/Dashboard";
 
 import { AddAccountModal } from "../modals/AddAccountModal";
@@ -18,25 +29,19 @@ import { EditAccountModal } from "../modals/EditAccountModal";
 import ConfirmationModal from "../modals/ConfirmationModal";
 
 const AccountsContainer = () => {
-  const {
-    accounts,
-    activeAccount,
-    setActiveAccount,
-    deleteAccount,
-    updateAccount,
-  } = useAccounts();
+  const dispatch = useDispatch();
+  const accounts = useSelector(selectAccounts);
+  const activeAccount = useSelector(selectActiveAccount);
 
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editAccountData, setEditAccountData] = useState<Account | null>(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDeleteAccount = async () => {
-    if (!confirmDeleteId) return;
-    await deleteAccount(confirmDeleteId);
-    setShowConfirmModal(false);
+  const handleSelectAll = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(setActiveAccount("all") as any);
   };
 
   useEffect(() => {
@@ -48,25 +53,22 @@ const AccountsContainer = () => {
   return (
     <>
       <AccountsCard>
-        <h3 style={{ fontWeight: 600, fontSize: 18, marginBottom: 12 }}>
+        <h3 style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>
           Your Accounts
         </h3>
 
         <AccountsWrapper>
-          {accounts.map((acc) => (
+          {accounts.map((acc: Account) => (
             <AccountItem
               key={acc._id}
-              $active={activeAccount === acc._id}
-              onClick={() => {
-                setActiveAccount(acc._id);
-                localStorage.setItem("activeAccount", acc._id);
-              }}
+              $active={activeAccount === "all" || activeAccount === acc._id}
+              onClick={() => dispatch(setActiveAccount(acc._id) as any)}
             >
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 500 }}>{acc.name}</span>
-                <span style={{ fontSize: "14px", opacity: 0.8 }}>
+              <div>
+                <p style={{ margin: 0, fontWeight: 600 }}>{acc.name}</p>
+                <small style={{ opacity: 0.7 }}>
                   ₹{acc.balance.toLocaleString()}
-                </span>
+                </small>
               </div>
 
               <DotsWrapper
@@ -83,22 +85,19 @@ const AccountsContainer = () => {
                   <MenuItem
                     onClick={() => {
                       setEditAccountData(acc);
-                      setIsEditModalOpen(true);
                       setMenuOpenFor(null);
                     }}
                   >
-                    Edit
+                    Edit Account
                   </MenuItem>
-                  <MenuItem
-                    style={{ color: "#ef4444" }}
+                  <MenuItemDanger
                     onClick={() => {
                       setConfirmDeleteId(acc._id);
-                      setShowConfirmModal(true);
                       setMenuOpenFor(null);
                     }}
                   >
                     Delete
-                  </MenuItem>
+                  </MenuItemDanger>
                 </AccountMenu>
               )}
             </AccountItem>
@@ -109,41 +108,40 @@ const AccountsContainer = () => {
           </AddAccountButton>
         </AccountsWrapper>
 
-        <div style={{ textAlign: "center" }}>
-          <AllAccountsLink
-            as="button"
-            onClick={() => {
-              setActiveAccount("all");
-              localStorage.setItem("activeAccount", "all");
-            }}
-          >
+        <SelectAllWrapper>
+          <AllAccountsLink onClick={handleSelectAll}>
             Select All Accounts
           </AllAccountsLink>
-        </div>
+        </SelectAllWrapper>
       </AccountsCard>
 
-      {/* Modals */}
       <AddAccountModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
+
       {editAccountData && (
         <EditAccountModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          isOpen={!!editAccountData}
+          onClose={() => setEditAccountData(null)}
           account={editAccountData}
           onSave={async (data) => {
-            await updateAccount(editAccountData._id, data);
-            setIsEditModalOpen(false);
+            await dispatch(updateAccount(editAccountData._id, data) as any);
+            setEditAccountData(null);
           }}
         />
       )}
+
       <ConfirmationModal
-        open={showConfirmModal}
+        open={!!confirmDeleteId}
         title="Delete Account?"
         message="Are you sure? All entries for this account will remain but lose their association."
-        onCancel={() => setShowConfirmModal(false)}
-        onConfirm={handleDeleteAccount}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={async () => {
+          if (confirmDeleteId)
+            await dispatch(deleteAccount(confirmDeleteId) as any);
+          setConfirmDeleteId(null);
+        }}
       />
     </>
   );

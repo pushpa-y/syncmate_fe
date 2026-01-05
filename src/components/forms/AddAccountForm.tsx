@@ -1,60 +1,114 @@
 import React, { useState } from "react";
-import { useAccounts } from "../../context/AccountsContext";
+import { useDispatch } from "react-redux";
+import { createAccount } from "../../redux/actions/accountActions";
+import styled from "styled-components";
 
-type Props = {
-  onClose: () => void;
-};
+const FormGroup = styled.div`
+  margin-bottom: 16px;
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #4b5563;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    outline: none;
+    &:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+  }
+`;
 
-export default function AddAccountForm({ onClose }: Props) {
-  const { create } = useAccounts();
-  const [name, setName] = useState("");
-  const [balance, setBalance] = useState("");
+export default function AddAccountForm({ onClose }: { onClose: () => void }) {
+  const dispatch = useDispatch();
+  const [data, setData] = useState({ name: "", balance: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
-    await create({ name, balance: Number(balance) || 0 });
-    onClose();
+
+    if (!data.name.trim() || loading) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await dispatch(
+        createAccount({
+          name: data.name.trim(),
+          balance: Number(data.balance) || 0,
+        }) as any,
+      );
+
+      onClose();
+    } catch (err) {
+      console.error("API Error:", err);
+      alert("Failed to create account.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
-      <div className="flex-1 flex flex-col">
-        <label className="text-sm font-medium">Account Name</label>
+    <form onSubmit={handleSubmit}>
+      <FormGroup>
+        <label>Account Name</label>
         <input
-          type="text"
-          placeholder="Account Name"
-          value={name}
-          onChange={e => setName(e.target.value)}
+          placeholder="e.g. HDFC Bank, Cash"
+          value={data.name}
+          onChange={(e) => setData({ ...data, name: e.target.value })}
           required
-          className="border p-2 rounded"
+          autoFocus
         />
-      </div>
+      </FormGroup>
 
-      <div className="flex-1 flex flex-col">
-        <label className="text-sm font-medium">Initial Balance</label>
+      <FormGroup>
+        <label>Initial Balance</label>
         <input
           type="number"
-          placeholder="Initial Balance"
-          value={balance}
-          onChange={e => setBalance((e.target.value))}
-          className="border p-2 rounded"
+          placeholder="0.00"
+          value={data.balance}
+          onChange={(e) => setData({ ...data, balance: e.target.value })}
         />
-      </div>
+      </FormGroup>
 
-      <div className="flex gap-2">
+      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-gray-300 rounded"
+          style={{
+            flex: 1,
+            padding: "12px",
+            borderRadius: "8px",
+            background: "#f3f4f6",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 500,
+          }}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-indigo-600 text-white rounded"
+          disabled={loading}
+          style={{
+            flex: 2,
+            padding: "12px",
+            borderRadius: "8px",
+            background: "#4f46e5",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
         >
-          Add Account
+          {loading ? "Creating..." : "Create Account"}
         </button>
       </div>
     </form>

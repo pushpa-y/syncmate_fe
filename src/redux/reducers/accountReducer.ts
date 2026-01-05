@@ -1,23 +1,55 @@
-import { 
-  ACCOUNT_LIST_REQUEST, 
-  ACCOUNT_LIST_SUCCESS, 
-  ACCOUNT_LIST_FAIL 
-} from '../constants/accountConstants';
+import {
+  ACCOUNT_LIST_REQUEST,
+  ACCOUNT_LIST_SUCCESS,
+  ACCOUNT_LIST_FAIL,
+  SET_ACTIVE_ACCOUNT,
+} from "../constants/accountConstants";
+import type { Account } from "../../services/accounts";
 
-const initialState = {
+interface AccountState {
+  accounts: Account[];
+  activeAccount: string | null;
+  loading: boolean;
+  error: any;
+}
+
+const initialState: AccountState = {
   accounts: [],
+  activeAccount: localStorage.getItem("activeAccount") || "all",
   loading: false,
-  error: null
+  error: null,
 };
 
-export const accountReducer = (state = initialState, action: any) => {
+export const accountReducer = (
+  state = initialState,
+  action: any,
+): AccountState => {
   switch (action.type) {
     case ACCOUNT_LIST_REQUEST:
       return { ...state, loading: true };
+
     case ACCOUNT_LIST_SUCCESS:
-      return { loading: false, accounts: action.payload, error: null };
+      return {
+        ...state, // MUST spread state to keep activeAccount
+        loading: false,
+        accounts: action.payload,
+        error: null,
+      };
+
     case ACCOUNT_LIST_FAIL:
-      return { loading: false, error: action.payload, accounts: [] };
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+        accounts: [],
+      };
+
+    case SET_ACTIVE_ACCOUNT:
+      return {
+        ...state,
+        activeAccount: action.payload,
+      };
+
     default:
       return state;
   }

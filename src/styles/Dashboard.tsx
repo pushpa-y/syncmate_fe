@@ -22,6 +22,14 @@ export const BaseCard = styled(motion.div)<{
       $clickable ? "translateY(-1px)" : "none"};
   }
 `;
+export const SelectAllWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  border-top: 1px solid ${({ theme }) => theme.glassBorder || "#f3f4f6"};
+  padding-top: 12px;
+`;
 
 export const AccountsCard = styled(BaseCard)`
   padding: 18px 20px;
@@ -31,7 +39,6 @@ export const AccountsCard = styled(BaseCard)`
 export const AccountItem = styled.div<{ $active: boolean }>`
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
   padding: 14px;
   position: relative;
   border-radius: 12px;
@@ -43,6 +50,7 @@ export const AccountItem = styled.div<{ $active: boolean }>`
   align-items: center;
   cursor: pointer;
   transition: 0.2s ease;
+  z-index: ${(p) => (p.$active ? 2 : 1)};
 
   &:hover {
     background: ${(p) =>
@@ -73,7 +81,7 @@ export const AllAccountsLink = styled.button`
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  color: #6366f1; /* Indigo color */
+  color: #6366f1;
   text-decoration: underline;
   transition: opacity 0.2s;
 
@@ -88,7 +96,6 @@ export const AllAccountsLink = styled.button`
   }
 `;
 
-// Update AccountsWrapper to be more flexible on small screens
 export const AccountsWrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -106,9 +113,9 @@ export const AccountsWrapper = styled.div`
 `;
 
 export const FloatingAddButton = styled.button`
-  position: fixed; /* Fixes it to the screen viewport */
-  bottom: 30px; /* Distance from bottom */
-  right: 30px; /* Distance from right */
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -118,14 +125,14 @@ export const FloatingAddButton = styled.button`
   font-size: 28px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
-  /* Critical: Ensure it is above the Entry cards */
   z-index: 1000;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
 
   &:hover {
     background-color: #4f46e5;
@@ -177,5 +184,12 @@ export const MenuItem = styled.div`
 
   &:hover {
     background: #f3f4f6;
+  }
+`;
+
+export const MenuItemDanger = styled(MenuItem)`
+  color: #ef4444;
+  &:hover {
+    background: #fee2e2;
   }
 `;

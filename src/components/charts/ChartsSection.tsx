@@ -4,8 +4,7 @@ import { AuthContext } from "../../context/Authcontext";
 import {
   selectTotalBalance,
   selectAccounts,
-} from "../../redux/selectors/accountSelectors";
-// 2. Import the action creator
+} from "../../redux/selectors/appSelectors";
 import { listAccounts } from "../../redux/actions/accountActions";
 
 import {
