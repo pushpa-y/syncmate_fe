@@ -1,63 +1,59 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Account } from "../../services/accounts";
+import type { Entry } from "../../services/Entry";
 import { Form } from "../../styles/EntryFormEdit";
 import { CATEGORIES } from "../../constants/categories";
 
 type Props = {
-  editValue: string;
-  editEntryType: "income" | "expense" | "transfer";
-  editDueDate: string;
-  editNotes: string;
-  editAccountId?: string;
-  editFromAccountId?: string;
-  editToAccountId?: string;
-  editCategory: string;
+  entry: Entry;
   accounts: Account[];
-  setEditValue: (n: string) => void;
-  setEditEntryType: (n: "income" | "expense" | "transfer") => void;
-  setEditDueDate: (s: string) => void;
-  setEditNotes: (s: string) => void;
-  setEditAccountId: (id: string | null) => void;
-  setEditFromAccountId: (id: string) => void;
-  setEditToAccountId: (id: string) => void;
-  setEditCategory: (s: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (id: string, updatedData: any) => void;
   onCancel: () => void;
 };
 
 export default function EntryFormEdit({
-  editValue,
-  editEntryType,
-  editDueDate,
-  editNotes,
-  editAccountId,
-  editFromAccountId,
-  editToAccountId,
-  editCategory,
+  entry,
   accounts,
-  setEditValue,
-  setEditEntryType,
-  setEditDueDate,
-  setEditNotes,
-  setEditAccountId,
-  setEditFromAccountId,
-  setEditToAccountId,
-  setEditCategory,
   onSubmit,
   onCancel,
 }: Props) {
+  const [formData, setFormData] = useState({
+    value: entry.value?.toString() || "",
+    entryType:
+      (entry.entryType as "income" | "expense" | "transfer") || "expense",
+    dueDate: entry.dueDate?.split("T")[0] || "",
+    notes: entry.notes || "",
+    category: entry.category || "",
+    accountId: entry.account || entry.baseAccount || "",
+    fromAccount: entry.fromAccount || "",
+    toAccount: entry.toAccount || "",
+  });
+
+  const handleChange = (field: string, val: any) => {
+    setFormData((prev) => ({ ...prev, [field]: val }));
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !formData.value ||
+      (!formData.accountId && formData.entryType !== "transfer")
+    ) {
+      alert("Please enter an amount and select an account.");
+      return;
+    }
+    onSubmit(entry._id, formData);
+  };
+
   return (
-    <Form onSubmit={onSubmit}>
-      {/* Entry Type Buttons */}
+    <Form onSubmit={handleFormSubmit}>
       <div className="entry-type-buttons">
         {["income", "expense", "transfer"].map((type) => (
           <button
             key={type}
             type="button"
-            className={`${type} ${editEntryType === type ? "active" : ""}`}
-            onClick={() =>
-              setEditEntryType(type as "income" | "expense" | "transfer")
-            }
+            className={`${type} ${formData.entryType === type ? "active" : ""}`}
+            onClick={() => handleChange("entryType", type)}
           >
             {type.charAt(0).toUpperCase() + type.slice(1)}
           </button>
@@ -66,48 +62,51 @@ export default function EntryFormEdit({
 
       {/* Amount */}
       <input
-        type="text"
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
+        type="number"
         placeholder="Amount"
+        required
+        value={formData.value}
+        onChange={(e) => handleChange("value", e.target.value)}
       />
 
-      {/* Accounts */}
-      {editEntryType === "transfer" ? (
-        <>
+      {/* Account Selection */}
+      {formData.entryType === "transfer" ? (
+        <div className="row">
           <select
-            value={editFromAccountId}
-            onChange={(e) => setEditFromAccountId(e.target.value)}
+            required
+            value={formData.fromAccount}
+            onChange={(e) => handleChange("fromAccount", e.target.value)}
           >
             <option value="">From Account</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.name} — ₹{a.balance}
+                {a.name}
               </option>
             ))}
           </select>
-          
           <select
-            value={editToAccountId}
-            onChange={(e) => setEditToAccountId(e.target.value)}
+            required
+            value={formData.toAccount}
+            onChange={(e) => handleChange("toAccount", e.target.value)}
           >
             <option value="">To Account</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.name} — ₹{a.balance}
+                {a.name}
               </option>
             ))}
           </select>
-        </>
+        </div>
       ) : (
         <select
-          value={editAccountId}
-          onChange={(e) => setEditAccountId(e.target.value)}
+          required
+          value={formData.accountId}
+          onChange={(e) => handleChange("accountId", e.target.value)}
         >
-          <option value="">Select account</option>
+          <option value="">Select Account</option>
           {accounts.map((a) => (
             <option key={a._id} value={a._id}>
-              {a.name} — ₹{a.balance}
+              {a.name}
             </option>
           ))}
         </select>
@@ -117,46 +116,47 @@ export default function EntryFormEdit({
       <div className="row">
         <input
           type="date"
-          value={editDueDate}
-          onChange={(e) => setEditDueDate(e.target.value)}
+          value={formData.dueDate}
+          onChange={(e) => handleChange("dueDate", e.target.value)}
         />
         <input
           type="text"
           placeholder="Notes"
-          value={editNotes}
-          onChange={(e) => setEditNotes(e.target.value)}
+          value={formData.notes}
+          onChange={(e) => handleChange("notes", e.target.value)}
         />
       </div>
 
       {/* Category */}
-{editEntryType !== "transfer" && (
-  <select
-    required
-    value={editCategory}
-    onChange={(e) => setEditCategory(e.target.value)}
-  >
-    <option value="">Select Category</option>
-    {CATEGORIES
-      .filter((c) => !c.parentId && c.type === editEntryType)
-      .map((main) => (
-        <optgroup key={main.id} label={`${main.icon} ${main.name}`}>
-          {CATEGORIES.filter((sub) => sub.parentId === main.id).map((sub) => (
-            <option key={sub.id} value={sub.id}>
-              {sub.icon} {sub.name}
-            </option>
+      {formData.entryType !== "transfer" && (
+        <select
+          required
+          value={formData.category}
+          onChange={(e) => handleChange("category", e.target.value)}
+        >
+          <option value="">Select Category</option>
+          {CATEGORIES.filter(
+            (c) => !c.parentId && c.type === formData.entryType,
+          ).map((main) => (
+            <optgroup key={main.id} label={`${main.icon} ${main.name}`}>
+              {CATEGORIES.filter((sub) => sub.parentId === main.id).map(
+                (sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.icon} {sub.name}
+                  </option>
+                ),
+              )}
+            </optgroup>
           ))}
-        </optgroup>
-      ))}
-  </select>
-)}
+        </select>
+      )}
 
-      {/* Actions */}
       <div className="actions mt-4">
         <button type="button" onClick={onCancel} className="secondary">
           Cancel
         </button>
         <button type="submit" className="primary">
-          Save
+          Update Transaction
         </button>
       </div>
     </Form>

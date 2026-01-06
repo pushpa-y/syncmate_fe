@@ -1,165 +1,162 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { Account } from "../../services/accounts";
 import { Form } from "../../styles/EntryFormEdit";
 import { CATEGORIES } from "../../constants/categories";
 
 type Props = {
-  value: string;
-  entryType: "income" | "expense" | "transfer";
-  accountId?: string;
-  fromAccountId?: string;
-  toAccountId?: string;
-  dueDate: string;
-  notes: string;
-  category: string;
   accounts: Account[];
-  setValue: (n: string) => void;
-  setEntryType: (s: "income" | "expense" | "transfer") => void;
-  setAccountId: (id: string | null) => void;
-  setFromAccountId: (id: string) => void;
-  setToAccountId: (id: string) => void;
-  setDueDate: (s: string) => void;
-  setNotes: (s: string) => void;
-  setCategory: (s: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  initialAccountId?: string;
+  onSubmit: (formData: any) => void;
   onCancel: () => void;
 };
 
 export default function EntryFormCreate({
-  value,
-  entryType,
-  accountId,
-  fromAccountId,
-  toAccountId,
-  dueDate,
-  notes,
-  category,
   accounts,
-  setValue,
-  setEntryType,
-  setAccountId,
-  setFromAccountId,
-  setToAccountId,
-  setDueDate,
-  setNotes,
-  setCategory,
+  initialAccountId,
   onSubmit,
   onCancel,
 }: Props) {
+  const [formData, setFormData] = useState({
+    value: "",
+    entryType: "expense" as "income" | "expense" | "transfer",
+    accountId: initialAccountId || "",
+    fromAccount: "",
+    toAccount: "",
+    dueDate: new Date().toISOString().split("T")[0],
+    notes: "",
+    category: "",
+  });
+
+  useEffect(() => {
+    if (initialAccountId) {
+      setFormData((prev) => ({ ...prev, accountId: initialAccountId }));
+    }
+  }, [initialAccountId]);
+
+  const handleChange = (field: string, val: any) => {
+    setFormData((prev) => ({ ...prev, [field]: val }));
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !formData.value ||
+      (!formData.accountId && formData.entryType !== "transfer")
+    ) {
+      alert("Please fill in required fields (Amount and Account)");
+      return;
+    }
+    onSubmit(formData);
+  };
+
   return (
-    <Form onSubmit={onSubmit}>
-      {/* Entry Type Buttons */}
+    <Form onSubmit={handleFormSubmit}>
       <div className="entry-type-buttons">
         {["income", "expense", "transfer"].map((type) => (
           <button
             key={type}
             type="button"
-            className={`${type} ${entryType === type ? "active" : ""}`}
-            onClick={() =>
-              setEntryType(type as "income" | "expense" | "transfer")
-            }
+            className={`${type} ${formData.entryType === type ? "active" : ""}`}
+            onClick={() => handleChange("entryType", type as any)}
           >
             {type.charAt(0).toUpperCase() + type.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Amount */}
       <input
-        type="text"
-        placeholder="Amount"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        type="number"
+        placeholder="0.00"
+        required
+        value={formData.value}
+        onChange={(e) => handleChange("value", e.target.value)}
       />
 
-      {/* Accounts */}
-      {entryType === "transfer" ? (
-        <>
+      {formData.entryType === "transfer" ? (
+        <div className="row">
           <select
-            value={fromAccountId}
-            onChange={(e) => setFromAccountId(e.target.value)}
+            required
+            value={formData.fromAccount}
+            onChange={(e) => handleChange("fromAccount", e.target.value)}
           >
             <option value="">From Account</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.name} — ₹{a.balance}
+                {a.name} (₹{a.balance})
               </option>
             ))}
           </select>
           <select
-            value={toAccountId}
-            onChange={(e) => setToAccountId(e.target.value)}
+            required
+            value={formData.toAccount}
+            onChange={(e) => handleChange("toAccount", e.target.value)}
           >
             <option value="">To Account</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.name} — ₹{a.balance}
+                {a.name} (₹{a.balance})
               </option>
             ))}
           </select>
-        </>
+        </div>
       ) : (
         <select
-          value={accountId}
-          onChange={(e) => setAccountId(e.target.value)}
+          required
+          value={formData.accountId}
+          onChange={(e) => handleChange("accountId", e.target.value)}
         >
-          <option value="">Select account</option>
+          <option value="">Select Account</option>
           {accounts.map((a) => (
             <option key={a._id} value={a._id}>
-              {a.name} — ₹{a.balance}
+              {a.name} (₹{a.balance})
             </option>
           ))}
         </select>
       )}
 
-      {/* Date & Notes */}
       <div className="row">
         <input
           type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
+          value={formData.dueDate}
+          onChange={(e) => handleChange("dueDate", e.target.value)}
         />
         <input
           type="text"
-          placeholder="Notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes (optional)"
+          value={formData.notes}
+          onChange={(e) => handleChange("notes", e.target.value)}
         />
       </div>
 
-      {/* Category */}
-      {entryType !== "transfer" && (
+      {formData.entryType !== "transfer" && (
         <select
           required
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          value={formData.category}
+          onChange={(e) => handleChange("category", e.target.value)}
         >
           <option value="">Select Category</option>
-          {CATEGORIES
-            // 1. Get main categories (no parentId)
-            // 2. Filter by the current entryType (income vs expense)
-            .filter((c) => !c.parentId && c.type === entryType)
-            .map((main) => (
-              <optgroup key={main.id} label={`${main.icon} ${main.name}`}>
-                {CATEGORIES.filter((sub) => sub.parentId === main.id).map(
-                  (sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.icon} {sub.name}
-                    </option>
-                  )
-                )}
-              </optgroup>
-            ))}
+          {CATEGORIES.filter(
+            (c) => !c.parentId && c.type === formData.entryType,
+          ).map((main) => (
+            <optgroup key={main.id} label={`${main.icon} ${main.name}`}>
+              {CATEGORIES.filter((sub) => sub.parentId === main.id).map(
+                (sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.icon} {sub.name}
+                  </option>
+                ),
+              )}
+            </optgroup>
+          ))}
         </select>
       )}
 
-      {/* Actions */}
       <div className="actions mt-4">
         <button type="button" onClick={onCancel} className="secondary">
           Cancel
         </button>
         <button type="submit" className="primary">
-          Save
+          Save Transaction
         </button>
       </div>
     </Form>

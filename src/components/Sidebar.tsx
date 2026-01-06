@@ -3,6 +3,7 @@ import {
   FiHome,
   FiBarChart2,
   FiSettings,
+  FiList,
   FiSun,
   FiMoon,
   FiUser,
@@ -24,6 +25,7 @@ import {
 
 const NAV_ITEMS = [
   { to: "/dashboard", icon: FiHome, label: "Dashboard" },
+  { to: "/entries", icon: FiList, label: "Entries" },
   { to: "/accounts", icon: FiLayers, label: "Accounts" },
   { to: "/analytics", icon: FiBarChart2, label: "Analytics" },
 ];
@@ -55,7 +57,7 @@ export default function Sidebar() {
       transition={{
         type: "spring",
         stiffness: 400, // Higher = faster snap
-        damping: 40, // Higher = less "bounce"
+        damping: 40, // Higher = less bounce
         mass: 1,
       }}
     >

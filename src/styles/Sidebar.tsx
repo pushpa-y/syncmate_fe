@@ -28,7 +28,9 @@ const navItemStyles = css<{ $collapsed: boolean }>`
     font-size: 14px;
     opacity: ${(p) => (p.$collapsed ? 0 : 1)};
     width: ${(p) => (p.$collapsed ? "0px" : "auto")};
-    transition: opacity 0.2s ease, width 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      width 0.2s ease;
   }
 
   &:hover {
@@ -65,10 +67,30 @@ export const Nav = styled.nav`
 
 export const NavItemLink = styled(NavLink)<{ $collapsed: boolean }>`
   ${navItemStyles}
+  position: relative;
+
   &.active {
     background: #6366f115;
     color: #6366f1;
     font-weight: 600;
+
+    /* Left accent indicator */
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 15%;
+      height: 70%;
+      width: 4px;
+      background: #6366f1;
+      border-radius: 0 4px 4px 0;
+    }
+  }
+
+  &:hover:not(.active) {
+    background: ${(p) => p.theme.cardBg}50;
+    transform: translateX(4px);
+    transition: all 0.2s ease;
   }
 `;
 

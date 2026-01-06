@@ -13,6 +13,7 @@ import { SidebarProvider } from "./context/SidebarContext";
 
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import EntriesPage from "./pages/EntriesPage";
 import Profile from "./pages/Profile";
 import AccountsPage from "./pages/AccountsPage";
 import Analytics from "./pages/Analytics";
@@ -32,6 +33,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/" element={<Home />} />
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/entries" element={<EntriesPage />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/accounts" element={<AccountsPage />} />
                   <Route path="/analytics" element={<Analytics />} />

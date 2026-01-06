@@ -59,17 +59,33 @@ export const AccountItem = styled.div<{ $active: boolean }>`
 `;
 
 export const AddAccountButton = styled.button`
-  padding: 10px;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #6366f1;
   color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
   border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  margin-top: 6px;
-  transition: 0.2s;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 
   &:hover {
     background: #4f46e5;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    font-size: 1.1rem;
   }
 `;
 export const AllAccountsLink = styled.button`
