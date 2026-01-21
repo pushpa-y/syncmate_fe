@@ -31,7 +31,7 @@ export const ChartCard = styled(motion.div)`
   min-height: 360px;
   width: 100%;
   box-sizing: border-box;
-  transition: 0.25s ease;
+  transition: transform 0.2s ease;
 
   &:hover {
     transform: translateY(-2px);
@@ -53,9 +53,75 @@ export const MonthSelector = styled.div`
 
 export const FilterSection = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .filter-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.muted};
+    letter-spacing: 0.05em;
+    margin-left: 4px;
+  }
+
+  .filter-divider {
+    width: 1px;
+    height: 35px;
+    background: rgba(0, 0, 0, 0.08);
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  .segmented-control {
+    display: flex;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 3px;
+    border-radius: 10px;
+    gap: 2px;
+
+    button {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: ${({ theme }) => theme.text};
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &.active {
+        background: white;
+        color: #6366f1;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      }
+
+      &:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    .more-btn {
+      padding: 0 10px;
+      font-size: 1.1rem;
+    }
+  }
 `;
 
 export const MonthButton = styled.button<{ $active: boolean }>`

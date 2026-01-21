@@ -18,7 +18,6 @@ import type { Entry } from "../services/Entry";
 
 // Components
 import Modal from "../components/modals/Modal";
-import FiltersBar from "../components/FiltersBar";
 import EntryList from "../components/entries/EntryList";
 import EntryFormCreate from "../components/forms/EntryFormCreate";
 import EntryFormEdit from "../components/forms/EntryFormEdit";
@@ -43,13 +42,14 @@ const Dashboard = () => {
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+
+  // REMOVED: sortBy and categoryFilter states
 
   const startEdit = (entry: Entry) => {
     setEditingEntry(entry);
     setIsModalOpen(true);
   };
+
   const syncData = useCallback(() => {
     if (auth?.token) dispatch(listAccounts(auth.token) as any);
   }, [auth?.token, dispatch]);
@@ -57,36 +57,36 @@ const Dashboard = () => {
   const fetchEntries = useCallback(
     (p = 1) => {
       if (!auth?.token) return;
-      const accId =
-        activeAccount === "all" || !activeAccount ? undefined : activeAccount;
+
+      const accId = activeAccount === "all" ? undefined : activeAccount;
 
       dispatch(
         listEntries(auth.token, {
           page: p,
           limit: PER_PAGE,
-          sortBy,
-          category: categoryFilter,
           accountId: accId,
         }) as any,
       );
     },
-    [auth?.token, activeAccount, sortBy, categoryFilter, dispatch],
+    [auth?.token, activeAccount, dispatch],
   );
 
   useEffect(() => {
     syncData();
   }, [syncData]);
+
   useEffect(() => {
     fetchEntries(page);
   }, [fetchEntries, page]);
+
+  // Reset page to 1 whenever the active account changes
   useEffect(() => {
     setPage(1);
-  }, [activeAccount, sortBy, categoryFilter]);
+  }, [activeAccount]);
 
   const handleCreate = async (formData: any) => {
     if (!auth?.token) return;
     try {
-      // If no accountId is in form (e.g. "Select Account" was empty), fallback to active sidebar account
       const payload = {
         ...formData,
         accountId:
@@ -124,42 +124,62 @@ const Dashboard = () => {
     }
   };
 
+  const filteredEntriesForList = useMemo(() => {
+    if (activeAccount === "all" || !activeAccount) {
+      return entries;
+    }
+    return entries.filter(
+      (e: Entry) =>
+        e.account === activeAccount || e.baseAccount === activeAccount,
+    );
+  }, [entries, activeAccount]);
+
   const hasMore = useMemo(() => page < reduxPages, [page, reduxPages]);
 
   return (
     <DashboardRoot>
       <DashboardGrid>
         <AccountsContainer />
-        <ChartsSection entries={entries} />
-        <FiltersBar
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
-        />
-        <EntryList
-          entries={entries}
-          accounts={accounts}
-          onEdit={startEdit}
-          onDelete={async (id) => {
-            if (auth?.token) {
-              await deleteEntry(auth.token, id);
-              fetchEntries(page);
-              syncData();
-            }
-          }}
-        />
-        {hasMore && (
-          <LoadMoreButton
-            onClick={() => setPage((p) => p + 1)}
-            disabled={isLoading}
-          >
-            {isLoading ? "Loading..." : "Load More Transactions"}
-          </LoadMoreButton>
-        )}
+
+        <ContentSection>
+          <SectionHeader>
+            <SectionTitle>Analytics & Insights</SectionTitle>
+          </SectionHeader>
+          <ChartsSection entries={entries} />
+        </ContentSection>
+
+        <ContentSection>
+          <SectionHeader>
+            <SectionTitle>Transaction History</SectionTitle>
+            <div style={{ fontSize: "12px", opacity: 0.6 }}>
+              Showing latest activity
+            </div>
+          </SectionHeader>
+
+          <EntryList
+            entries={filteredEntriesForList}
+            accounts={accounts}
+            onEdit={startEdit}
+            onDelete={async (id) => {
+              if (auth?.token) {
+                await deleteEntry(auth.token, id);
+                fetchEntries(page);
+                syncData();
+              }
+            }}
+          />
+
+          {hasMore && (
+            <LoadMoreButton
+              onClick={() => setPage((p) => p + 1)}
+              disabled={isLoading}
+            >
+              {isLoading ? "Loading..." : "Load More Transactions"}
+            </LoadMoreButton>
+          )}
+        </ContentSection>
       </DashboardGrid>
 
-      {/* CREATE MODAL */}
       <Modal
         isOpen={isAddEntryModalOpen}
         onClose={() => setIsAddEntryModalOpen(false)}
@@ -191,11 +211,14 @@ const Dashboard = () => {
   );
 };
 
+// --- STYLES ---
+
 const DashboardRoot = styled.div`
   width: 100%;
   min-height: 100vh;
   background: ${(p) => p.theme.bg};
 `;
+
 const DashboardGrid = styled.div`
   width: 100%;
   max-width: 1200px;
@@ -205,14 +228,60 @@ const DashboardGrid = styled.div`
   flex-direction: column;
   gap: 20px;
 `;
-const LoadMoreButton = styled.button`
-  padding: 12px 24px;
+
+const ContentSection = styled.section`
   background: ${(p) => p.theme.cardBg};
-  border-radius: 12px;
-  margin: 20px auto 80px;
+  border: 1px solid ${(p) => p.theme.glassBorder || "rgba(0,0,0,0.05)"};
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid ${(p) => p.theme.glassBorder || "rgba(0,0,0,0.05)"};
+  margin-bottom: 8px;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: ${(p) => p.theme.text};
+  opacity: 0.9;
+`;
+
+const LoadMoreButton = styled.button`
   display: block;
-  cursor: pointer;
+  margin: 30px auto 80px;
+  padding: 12px 32px;
+  background: ${(p) => p.theme.accent};
+  color: white;
   border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+
+  &:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    background: ${(p) => p.theme.muted};
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `;
 
 export default Dashboard;

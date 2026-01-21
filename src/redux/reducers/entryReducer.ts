@@ -4,6 +4,7 @@ import {
   ENTRY_LIST_FAIL,
   ENTRY_DELETE_SUCCESS,
 } from "../constants/entryConstants";
+import { SET_ACTIVE_ACCOUNT } from "../constants/accountConstants";
 import type { Entry } from "../../services/Entry";
 
 interface EntryState {
@@ -26,6 +27,15 @@ export const entryReducer = (state = initialState, action: any): EntryState => {
   switch (action.type) {
     case ENTRY_LIST_REQUEST:
       return { ...state, loading: true };
+
+    //Adding this case to clear the list immediately when account changes
+    case SET_ACTIVE_ACCOUNT:
+      return {
+        ...state,
+        entries: [],
+        pages: 1,
+        loading: true,
+      };
 
     case ENTRY_LIST_SUCCESS:
       return {

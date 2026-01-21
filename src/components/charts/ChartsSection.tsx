@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect, useRef, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { AuthContext } from "../../context/Authcontext";
 import {
-  selectTotalBalance,
   selectAccounts,
+  selectActiveAccount,
 } from "../../redux/selectors/appSelectors";
 import { listAccounts } from "../../redux/actions/accountActions";
 
@@ -11,6 +11,7 @@ import {
   PieChart,
   Pie,
   Label,
+  LabelList,
   Cell,
   Tooltip,
   Legend,
@@ -32,8 +33,6 @@ import {
   FilterSection,
   ChartsGrid,
   ChartCard,
-  MonthSelector,
-  MonthButton,
   EmptyState,
   ChartTitle,
   SummaryContainer,
@@ -87,8 +86,7 @@ export default function ChartsSection({ entries }: Props) {
   const auth = useContext(AuthContext);
 
   const accounts = useSelector(selectAccounts);
-  const totalBalance = useSelector(selectTotalBalance);
-  const animatedTotal = useAnimatedNumber(totalBalance);
+  const activeAccountId = useSelector(selectActiveAccount);
 
   useEffect(() => {
     if (auth?.token) {
@@ -105,7 +103,6 @@ export default function ChartsSection({ entries }: Props) {
     year: now.getFullYear(),
     label: now.toLocaleString("en-IN", { month: "short", year: "numeric" }),
   });
-  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   /* ---------- CLOSE DROPDOWN ON OUTSIDE CLICK ---------- */
@@ -136,7 +133,12 @@ export default function ChartsSection({ entries }: Props) {
     return months;
   }, []);
 
-  /* ---------- FILTER & PROCESS DATA ---------- */
+  const activeAccountName = useMemo(() => {
+    if (activeAccountId === "all") return "All Accounts";
+    const acc = accounts.find((a: Account) => a._id === activeAccountId);
+    return acc ? acc.name : "Selected Account";
+  }, [activeAccountId, accounts]);
+
   const processedData = useMemo(() => {
     const currentMonthEntries = entries.filter((e) => {
       if (!e.dueDate) return false;
@@ -144,11 +146,11 @@ export default function ChartsSection({ entries }: Props) {
 
       const isCorrectMonth =
         m === selectedMonth.month + 1 && y === selectedMonth.year;
+
       const isCorrectAccount =
-        selectedAccountId === "all" ||
-        e.accountId === selectedAccountId ||
-        e.fromAccountId === selectedAccountId ||
-        e.toAccountId === selectedAccountId;
+        activeAccountId === "all" ||
+        e.account === activeAccountId ||
+        e.baseAccount === activeAccountId;
 
       return isCorrectMonth && isCorrectAccount;
     });
@@ -185,7 +187,7 @@ export default function ChartsSection({ entries }: Props) {
         .map(([date, vals]) => ({ date, ...vals }))
         .sort((a, b) => a.date.localeCompare(b.date)),
     };
-  }, [entries, selectedMonth, selectedAccountId]);
+  }, [entries, selectedMonth, activeAccountId]);
 
   const { filteredEntries, expenseByCat, totalIn, totalOut, trendData } =
     processedData;
@@ -195,62 +197,60 @@ export default function ChartsSection({ entries }: Props) {
 
   return (
     <ChartsContainer>
-      <FilterSection>
-        {/* 1. ACCOUNT FILTER CHIPS */}
-        <MonthSelector>
-          <MonthButton
-            $active={selectedAccountId === "all"}
-            onClick={() => setSelectedAccountId("all")}
+      <FilterSection className="glass-filter-bar">
+        <div className="filter-group">
+          <span className="filter-label" style={{ color: theme.accent }}>
+            Context
+          </span>
+          <div
+            style={{ fontSize: "14px", fontWeight: "600", color: theme.text }}
           >
-            All Accounts
-          </MonthButton>
-          {accounts &&
-            accounts.map((acc: Account) => (
-              <MonthButton
-                key={acc._id}
-                $active={selectedAccountId === acc._id}
-                onClick={() => setSelectedAccountId(acc._id)}
+            Showing activity for{" "}
+            <span style={{ color: theme.accent }}>{activeAccountName}</span> in{" "}
+            {selectedMonth.label}
+          </div>
+        </div>
+        <div className="filter-divider" />
+        {/* Month Segmented Control */}
+        <div className="filter-group">
+          <span className="filter-label">Time Period</span>
+          <div className="segmented-control">
+            {monthsList.slice(0, 3).map((m) => (
+              <button
+                key={m.label}
+                className={m.label === selectedMonth.label ? "active" : ""}
+                onClick={() => setSelectedMonth(m)}
               >
-                {acc.name}
-              </MonthButton>
+                {m.label}
+              </button>
             ))}
-        </MonthSelector>
 
-        {/* 2. MONTH SELECTOR */}
-        <MonthSelector>
-          {monthsList.slice(0, 3).map((m) => (
-            <MonthButton
-              key={m.label}
-              $active={m.label === selectedMonth.label}
-              onClick={() => setSelectedMonth(m)}
-            >
-              {m.label}
-            </MonthButton>
-          ))}
-          <RelativeWrapper ref={dropdownRef}>
-            <MonthButton
-              $active={false}
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
-              ⋯
-            </MonthButton>
-            {dropdownOpen && (
-              <DropdownMenu>
-                {monthsList.slice(3, 15).map((m) => (
-                  <DropdownItem
-                    key={m.label}
-                    onClick={() => {
-                      setSelectedMonth(m);
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    {m.label}
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            )}
-          </RelativeWrapper>
-        </MonthSelector>
+            {/* More Months Dropdown */}
+            <RelativeWrapper ref={dropdownRef} style={{ display: "flex" }}>
+              <button
+                className="more-btn"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                ⋯
+              </button>
+              {dropdownOpen && (
+                <DropdownMenu>
+                  {monthsList.slice(3, 15).map((m) => (
+                    <DropdownItem
+                      key={m.label}
+                      onClick={() => {
+                        setSelectedMonth(m);
+                        setDropdownOpen(false);
+                      }}
+                    >
+                      {m.label}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              )}
+            </RelativeWrapper>
+          </div>
+        </div>
       </FilterSection>
 
       {filteredEntries.length === 0 ? (
@@ -291,7 +291,7 @@ export default function ChartsSection({ entries }: Props) {
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                     <Label
-                      value={`₹${animatedTotal.toLocaleString()}`}
+                      value={`₹${animatedOut.toLocaleString()}`}
                       position="center"
                       fill={theme.text}
                       style={{
@@ -301,14 +301,13 @@ export default function ChartsSection({ entries }: Props) {
                       }}
                     />
                     <Label
-                      value="Total Balance"
+                      value="Total spending"
                       position="center"
                       dy={24}
                       fill={theme.muted}
                       style={{
                         fontSize: "11px",
                         fontWeight: "500",
-                        textTransform: "uppercase",
                       }}
                     />
                   </Pie>
@@ -384,42 +383,76 @@ export default function ChartsSection({ entries }: Props) {
               <ChartTitle>Spending by Category</ChartTitle>
               <ResponsiveContainer
                 width="100%"
-                height={Math.max(expenseByCat.length * 45, 250)}
+                height={Math.max(expenseByCat.length * 50, 300)}
               >
-                <BarChart layout="vertical" data={expenseByCat}>
+                <BarChart
+                  layout="vertical"
+                  data={expenseByCat}
+                  margin={{ top: 5, right: 60, left: 20, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="barGradient"
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="0"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor={theme.accent}
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor={theme.accent}
+                        stopOpacity={0.3}
+                      />
+                    </linearGradient>
+                  </defs>
+
                   <XAxis type="number" hide />
+
                   <YAxis
                     dataKey="name"
                     type="category"
-                    width={100}
-                    fontSize={12}
+                    width={120}
+                    fontSize={13}
                     axisLine={false}
                     tickLine={false}
+                    tick={{ fill: theme.text, fontWeight: 500 }}
                   />
+
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      borderRadius: "8px",
-                      color: "#f8fafc",
-                    }}
-                    itemStyle={{ color: "#f8fafc" }}
                     cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                    contentStyle={{
+                      backgroundColor: theme.cardBg,
+                      borderRadius: "12px",
+                      border: `1px solid ${theme.glassBorder}`,
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    }}
                     formatter={(v: any) => `₹${v.toLocaleString()}`}
                   />
+
                   <Bar
                     dataKey="value"
-                    fill={theme.accent}
-                    radius={[0, 4, 4, 0]}
-                    barSize={24}
-                    label={{
-                      position: "right",
-                      formatter: (v: any) =>
-                        typeof v === "number" ? `₹${formatAmount(v)}` : v,
-                      fontSize: 11,
-                      fill: theme.muted,
-                    }}
-                  />
+                    fill="url(#barGradient)"
+                    radius={[0, 10, 10, 0]}
+                    barSize={32}
+                  >
+                    <LabelList
+                      dataKey="value"
+                      position="right"
+                      offset={15}
+                      formatter={(v: any) => `₹${formatAmount(v)}`}
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        fill: theme.text,
+                        fontFamily: "Inter",
+                      }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>

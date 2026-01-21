@@ -1,147 +1,149 @@
-import React, { useState, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   selectAccounts,
   selectActiveAccount,
 } from "../../redux/selectors/appSelectors";
-import {
-  deleteAccount,
-  updateAccount,
-  setActiveAccount,
-} from "../../redux/actions/accountActions";
+import { setActiveAccount } from "../../redux/actions/accountActions";
 import type { Account } from "../../services/accounts";
 
 import {
-  AccountsCard,
-  AccountsWrapper,
-  AccountItem,
-  DotsWrapper,
-  AccountMenu,
-  MenuItem,
-  MenuItemDanger,
-  AddAccountButton,
-  AllAccountsLink,
+  AccountsSectionCard,
+  SectionHeader,
+  HeaderActions,
+  SettingsIcon,
+  AddAccountSmall,
+  CarouselContainer,
+  CarouselButton,
+  AccountsHorizontalScroll,
+  AccountPill,
+  PillInfo,
   SelectAllWrapper,
-} from "../../styles/Dashboard";
+  AllAccountsLink,
+} from "../../styles/Accounts";
 
 import { AddAccountModal } from "../modals/AddAccountModal";
-import { EditAccountModal } from "../modals/EditAccountModal";
-import ConfirmationModal from "../modals/ConfirmationModal";
 
 const AccountsContainer = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const accounts = useSelector(selectAccounts);
   const activeAccount = useSelector(selectActiveAccount);
 
-  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
+  const [showLeftBtn, setShowLeftBtn] = useState(false);
+  const [showRightBtn, setShowRightBtn] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editAccountData, setEditAccountData] = useState<Account | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleSelectAll = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dispatch(setActiveAccount("all") as any);
+  // Calculate total balance
+  const totalBalance = useMemo(
+    () =>
+      accounts.reduce((acc: number, curr: Account) => acc + curr.balance, 0),
+    [accounts],
+  );
+
+  // Logic to show/hide carousel buttons based on scroll position
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftBtn(scrollLeft > 10);
+      setShowRightBtn(scrollLeft < scrollWidth - clientWidth - 10);
+    }
   };
 
   useEffect(() => {
-    const close = () => setMenuOpenFor(null);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, []);
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener("scroll", checkScroll);
+      checkScroll();
+      return () => el.removeEventListener("scroll", checkScroll);
+    }
+  }, [accounts]);
+
+  const handleScroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 320;
+      const newPos =
+        direction === "left"
+          ? scrollRef.current.scrollLeft - scrollAmount
+          : scrollRef.current.scrollLeft + scrollAmount;
+
+      scrollRef.current.scrollTo({ left: newPos, behavior: "smooth" });
+    }
+  };
 
   return (
     <>
-      <AccountsCard>
-        <h3 style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>
-          Your Accounts
-        </h3>
-
-        <AccountsWrapper>
-          {accounts.map((acc: Account) => (
-            <AccountItem
-              key={acc._id}
-              $active={activeAccount === "all" || activeAccount === acc._id}
-              onClick={() => dispatch(setActiveAccount(acc._id) as any)}
+      <AccountsSectionCard>
+        <SectionHeader>
+          <div className="title-group">
+            <h3>My Accounts</h3>
+            <span className="total-label">
+              Total: ₹{totalBalance.toLocaleString()}
+            </span>
+          </div>
+          <HeaderActions>
+            <AddAccountSmall onClick={() => setIsAddModalOpen(true)}>
+              + Add Account
+            </AddAccountSmall>
+            <SettingsIcon
+              onClick={() => navigate("/accounts")}
+              title="Manage Accounts"
             >
-              <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>{acc.name}</p>
-                <small style={{ opacity: 0.7 }}>
-                  ₹{acc.balance.toLocaleString()}
-                </small>
-              </div>
+              ⚙️
+            </SettingsIcon>
+          </HeaderActions>
+        </SectionHeader>
 
-              <DotsWrapper
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuOpenFor(acc._id === menuOpenFor ? null : acc._id);
-                }}
+        <CarouselContainer>
+          {showLeftBtn && (
+            <CarouselButton
+              className="left"
+              onClick={() => handleScroll("left")}
+            >
+              ‹
+            </CarouselButton>
+          )}
+
+          <AccountsHorizontalScroll ref={scrollRef}>
+            {accounts.map((acc: Account) => (
+              <AccountPill
+                key={acc._id}
+                $active={activeAccount === acc._id || activeAccount === "all"}
+                onClick={() => dispatch(setActiveAccount(acc._id) as any)}
               >
-                ⋮
-              </DotsWrapper>
+                <PillInfo>
+                  <p>{acc.name}</p>
+                  <small>₹{acc.balance.toLocaleString()}</small>
+                </PillInfo>
+              </AccountPill>
+            ))}
+          </AccountsHorizontalScroll>
 
-              {menuOpenFor === acc._id && (
-                <AccountMenu onClick={(e) => e.stopPropagation()}>
-                  <MenuItem
-                    onClick={() => {
-                      setEditAccountData(acc);
-                      setMenuOpenFor(null);
-                    }}
-                  >
-                    Edit Account
-                  </MenuItem>
-                  <MenuItemDanger
-                    onClick={() => {
-                      setConfirmDeleteId(acc._id);
-                      setMenuOpenFor(null);
-                    }}
-                  >
-                    Delete
-                  </MenuItemDanger>
-                </AccountMenu>
-              )}
-            </AccountItem>
-          ))}
-
-          <AddAccountButton onClick={() => setIsAddModalOpen(true)}>
-            + Add Account
-          </AddAccountButton>
-        </AccountsWrapper>
+          {showRightBtn && (
+            <CarouselButton
+              className="right"
+              onClick={() => handleScroll("right")}
+            >
+              ›
+            </CarouselButton>
+          )}
+        </CarouselContainer>
 
         <SelectAllWrapper>
-          <AllAccountsLink onClick={handleSelectAll}>
+          <AllAccountsLink
+            onClick={() => dispatch(setActiveAccount("all") as any)}
+          >
             Select All Accounts
           </AllAccountsLink>
         </SelectAllWrapper>
-      </AccountsCard>
+      </AccountsSectionCard>
 
       <AddAccountModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-      />
-
-      {editAccountData && (
-        <EditAccountModal
-          isOpen={!!editAccountData}
-          onClose={() => setEditAccountData(null)}
-          account={editAccountData}
-          onSave={async (data) => {
-            await dispatch(updateAccount(editAccountData._id, data) as any);
-            setEditAccountData(null);
-          }}
-        />
-      )}
-
-      <ConfirmationModal
-        open={!!confirmDeleteId}
-        title="Delete Account?"
-        message="Are you sure? All entries for this account will remain but lose their association."
-        onCancel={() => setConfirmDeleteId(null)}
-        onConfirm={async () => {
-          if (confirmDeleteId)
-            await dispatch(deleteAccount(confirmDeleteId) as any);
-          setConfirmDeleteId(null);
-        }}
       />
     </>
   );

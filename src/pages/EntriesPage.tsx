@@ -11,17 +11,14 @@ import type { RootState } from "../redux/store";
 import type { Account } from "../services/accounts";
 
 // Styles
-import {
-  BaseCard,
-  AddAccountButton as PrimaryButton,
-} from "../styles/Dashboard";
+import { BaseCard } from "../styles/Dashboard";
 import {
   EntryTableWrapper,
   EntryRow,
   HeaderSection,
   StatusIcon,
 } from "../styles/Entries";
-import { FiPlus, FiArrowUpRight, FiArrowDownLeft } from "react-icons/fi";
+import { FiArrowUpRight, FiArrowDownLeft } from "react-icons/fi";
 
 // Components & Constants
 import Modal from "../components/modals/Modal";
@@ -80,9 +77,6 @@ const EntriesPage = () => {
             {activeAccount === "all" ? "All Accounts" : "Filtered View"}
           </small>
         </div>
-        <PrimaryButton onClick={() => setIsModalOpen(true)}>
-          <FiPlus /> Add Transaction
-        </PrimaryButton>
       </HeaderSection>
 
       <BaseCard $padding="0px">
