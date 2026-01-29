@@ -1,12 +1,12 @@
 import styled from "styled-components";
 
 export const AccountsSectionCard = styled.div`
-  background: white;
+  background: ${(p) => p.theme.cardBg || "white"};
   border-radius: 20px;
   padding: 16px 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   margin-bottom: 16px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid ${(p) => p.theme.glassBorder || "#f1f5f9"};
 `;
 
 export const SectionHeader = styled.div`
@@ -19,7 +19,7 @@ export const SectionHeader = styled.div`
     font-size: 18px;
     font-weight: 700;
     margin: 0;
-    color: #0f172a;
+    color: ${(p) => p.theme.text};
   }
 
   .total-label {
@@ -47,11 +47,12 @@ export const SettingsIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
+  background: ${(p) => p.theme.bg || "#f8fafc"};
+  border: 1px solid ${(p) => p.theme.glassBorder || "#f1f5f9"};
+  color: ${(p) => p.theme.text};
 
   &:hover {
-    background: #f1f5f9;
+    background: ${(p) => p.theme.glassBorder};
     color: #6366f1;
   }
 `;
@@ -69,8 +70,9 @@ export const CarouselButton = styled.button`
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: ${(p) => p.theme.cardBg};
+  border: 1px solid ${(p) => p.theme.glassBorder};
+  color: ${(p) => p.theme.textMuted};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   display: flex;
@@ -78,7 +80,6 @@ export const CarouselButton = styled.button`
   justify-content: center;
   font-size: 18px;
   transition: all 0.2s;
-  color: #64748b;
 
   &:hover {
     background: #6366f1;
@@ -117,13 +118,13 @@ export const AccountPill = styled.div<{ $active: boolean }>`
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: ${(p) => (p.$active ? "#6366f1" : "#f8fafc")};
-  color: ${(p) => (p.$active ? "white" : "#1e293b")};
-  border: 1px solid ${(p) => (p.$active ? "#4f46e5" : "#f1f5f9")};
+  background: ${(p) => (p.$active ? "#6366f1" : p.theme.bg)};
+  color: ${(p) => (p.$active ? "white" : p.theme.text)};
+  border: 1px solid ${(p) => (p.$active ? "#4f46e5" : p.theme.glassBorder)};
 
   &:hover {
     transform: translateY(-1px);
-    background: ${(p) => (p.$active ? "#4f46e5" : "#f1f5f9")};
+    background: ${(p) => (p.$active ? "#4f46e5" : p.theme.cardBg)};
   }
 `;
 
@@ -163,7 +164,7 @@ export const SelectAllWrapper = styled.div`
   justify-content: center;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid ${(p) => p.theme.glassBorder || "#f1f5f9"};
 `;
 
 export const AllAccountsLink = styled.button`
@@ -179,4 +180,76 @@ export const AllAccountsLink = styled.button`
   &:hover {
     opacity: 0.7;
   }
+`;
+
+//account page styles
+
+export const PageContainer = styled.div`
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+`;
+
+export const Title = styled.h2`
+  margin-bottom: 24px;
+  font-weight: 700;
+  color: ${(props) => props.theme.text};
+`;
+
+export const AccountList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+export const AccountCard = styled.div<{ $isActive: boolean }>`
+  padding: 16px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+
+  background: ${(props) =>
+    props.$isActive ? props.theme.sidebarBg : props.theme.cardBg};
+
+  border: 1px solid
+    ${(props) =>
+      props.$isActive ? props.theme.accent : props.theme.glassBorder};
+
+  box-shadow: ${(props) =>
+    props.$isActive ? "0 4px 12px rgba(79, 70, 229, 0.2)" : "none"};
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: ${(props) => props.theme.accent};
+    background: ${(props) => props.theme.sidebarBg};
+  }
+`;
+
+export const AccountInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+export const AccountName = styled.span<{ $isActive: boolean }>`
+  font-size: 16px;
+  font-weight: ${(props) => (props.$isActive ? "600" : "500")};
+  color: ${(props) =>
+    props.$isActive ? props.theme.accent : props.theme.text};
+`;
+
+export const Balance = styled.strong`
+  color: #10b981;
+  font-size: 18px;
+  font-family: "Inter", sans-serif;
+`;
+
+export const EmptyText = styled.p`
+  color: ${(props) => props.theme.muted};
+  text-align: center;
+  margin-top: 40px;
+  font-size: 15px;
 `;

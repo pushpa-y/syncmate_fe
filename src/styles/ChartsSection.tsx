@@ -56,9 +56,9 @@ export const FilterSection = styled.div`
   align-items: center;
   gap: 20px;
   padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.4);
+  background: ${({ theme }) => theme.cardBg};
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid ${({ theme }) => theme.glassBorder};
   border-radius: 16px;
   margin-bottom: 30px;
   flex-wrap: wrap;
@@ -82,7 +82,7 @@ export const FilterSection = styled.div`
   .filter-divider {
     width: 1px;
     height: 35px;
-    background: rgba(0, 0, 0, 0.08);
+    background: ${({ theme }) => theme.glassBorder};
     @media (max-width: 768px) {
       display: none;
     }
@@ -90,10 +90,11 @@ export const FilterSection = styled.div`
 
   .segmented-control {
     display: flex;
-    background: rgba(0, 0, 0, 0.04);
+    background: ${({ theme }) => theme.bg};
     padding: 3px;
     border-radius: 10px;
     gap: 2px;
+    border: 1px solid ${({ theme }) => theme.glassBorder};
 
     button {
       border: none;
@@ -107,19 +108,20 @@ export const FilterSection = styled.div`
       transition: all 0.2s ease;
 
       &.active {
-        background: white;
+        background: ${({ theme }) => theme.sidebarBg};
         color: #6366f1;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
       }
 
       &:hover:not(.active) {
-        background: rgba(255, 255, 255, 0.3);
+        background: ${({ theme }) => theme.glassBorder};
       }
     }
 
     .more-btn {
       padding: 0 10px;
       font-size: 1.1rem;
+      color: ${({ theme }) => theme.text};
     }
   }
 `;
@@ -196,7 +198,7 @@ export const DropdownMenu = styled.div`
   right: 0;
   background: ${(props) => props.theme.sidebarBg};
   z-index: 100;
-  border: 1px solid #eee;
+  border: 1px solid ${(props) => props.theme.glassBorder};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
@@ -207,11 +209,12 @@ export const DropdownItem = styled.div`
   padding: 10px 16px;
   cursor: pointer;
   font-size: 14px;
-  color: #374151;
+  color: ${(props) => props.theme.text};
   transition: background 0.2s;
 
   &:hover {
-    background: #f3f4f6;
+    background: ${(props) => props.theme.glassBorder};
+    color: #6366f1;
   }
 `;
 

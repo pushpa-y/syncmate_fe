@@ -10,18 +10,52 @@ const FormGroup = styled.div`
     margin-bottom: 6px;
     font-weight: 500;
     font-size: 14px;
-    color: #4b5563;
+    color: ${(p) => p.theme.text};
   }
   input {
     width: 100%;
     padding: 10px;
+    background: ${(p) => p.theme.bg};
     border-radius: 8px;
-    border: 1px solid #d1d5db;
+    border: 1px solid ${(p) => p.theme.glassBorder};
+    color: ${(p) => p.theme.text};
     outline: none;
     &:focus {
       border-color: #4f46e5;
       box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
     }
+  }
+`;
+
+const CancelButton = styled.button`
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  background: ${(p) => p.theme.glassBorder || "#334155"};
+  color: ${(p) => p.theme.text};
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const SubmitButton = styled.button`
+  flex: 2;
+  padding: 12px;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -79,37 +113,12 @@ export default function AddAccountForm({ onClose }: { onClose: () => void }) {
       </FormGroup>
 
       <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            flex: 1,
-            padding: "12px",
-            borderRadius: "8px",
-            background: "#f3f4f6",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
-        >
+        <CancelButton type="button" onClick={onClose}>
           Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            flex: 2,
-            padding: "12px",
-            borderRadius: "8px",
-            background: "#4f46e5",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
+        </CancelButton>
+        <SubmitButton type="submit" disabled={loading}>
           {loading ? "Creating..." : "Create Account"}
-        </button>
+        </SubmitButton>
       </div>
     </form>
   );

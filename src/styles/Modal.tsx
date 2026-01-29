@@ -3,7 +3,7 @@ import styled from "styled-components";
 export const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -11,8 +11,8 @@ export const Overlay = styled.div`
 `;
 
 export const Content = styled.div`
-  background: ${(p) => p.theme.surface}; // use theme surface
-  color: ${(p) => p.theme.text};         // use theme text
+  background: ${(p) => p.theme.surface};
+  color: ${(p) => p.theme.text};
   padding: 24px;
   border-radius: 12px;
   box-shadow: ${(p) => p.theme.cardShadow};

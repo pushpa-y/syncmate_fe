@@ -10,7 +10,7 @@ import * as accountService from "../../services/accounts";
 const getAuthToken = () =>
   localStorage.getItem("userInfo")
     ? JSON.parse(localStorage.getItem("userInfo")!).token
-    : localStorage.getItem("token");
+    : localStorage.getItem("authToken");
 
 export const setActiveAccount =
   (accountId: string | null) => (dispatch: any) => {

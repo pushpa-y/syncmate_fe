@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
     setToken(null);
     setUser(null);
+    //window.location.href = "/login";
   };
 
   const updateUser = (updatedUser: User) => {
