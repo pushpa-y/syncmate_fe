@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createAccount } from "../../redux/actions/accountActions";
+import {
+  createAccount,
+  updateAccount,
+} from "../../redux/actions/accountActions";
 import styled from "styled-components";
-
+import type { Account } from "../../services/accounts";
 const FormGroup = styled.div`
   margin-bottom: 16px;
   label {
@@ -59,31 +62,46 @@ const SubmitButton = styled.button`
   }
 `;
 
-export default function AddAccountForm({ onClose }: { onClose: () => void }) {
+interface Props {
+  onClose: () => void;
+  initialData?: Account | null; // If this exists, we are in Edit mode
+}
+
+export default function AddAccountForm({ onClose, initialData }: Props) {
   const dispatch = useDispatch();
-  const [data, setData] = useState({ name: "", balance: "" });
+  const [data, setData] = useState({
+    name: initialData?.name || "",
+    balance: initialData?.balance.toString() || "",
+  });
   const [loading, setLoading] = useState(false);
+
+  const isEdit = !!initialData;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!data.name.trim() || loading) {
-      return;
-    }
+    if (!data.name.trim() || loading) return;
 
     setLoading(true);
     try {
-      await dispatch(
-        createAccount({
-          name: data.name.trim(),
-          balance: Number(data.balance) || 0,
-        }) as any,
-      );
-
+      if (isEdit && initialData?._id) {
+        await dispatch(
+          updateAccount(initialData._id, {
+            name: data.name.trim(),
+            balance: Number(data.balance) || 0,
+          }) as any,
+        );
+      } else {
+        await dispatch(
+          createAccount({
+            name: data.name.trim(),
+            balance: Number(data.balance) || 0,
+          }) as any,
+        );
+      }
       onClose();
     } catch (err) {
-      console.error("API Error:", err);
-      alert("Failed to create account.");
+      alert(`Failed to ${isEdit ? "update" : "create"} account.`);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -94,7 +112,7 @@ export default function AddAccountForm({ onClose }: { onClose: () => void }) {
       <FormGroup>
         <label>Account Name</label>
         <input
-          placeholder="e.g. HDFC Bank, Cash"
+          placeholder="e.g. HDFC Bank"
           value={data.name}
           onChange={(e) => setData({ ...data, name: e.target.value })}
           required
@@ -103,7 +121,7 @@ export default function AddAccountForm({ onClose }: { onClose: () => void }) {
       </FormGroup>
 
       <FormGroup>
-        <label>Initial Balance</label>
+        <label>{isEdit ? "Current Balance" : "Initial Balance"}</label>
         <input
           type="number"
           placeholder="0.00"
@@ -117,7 +135,7 @@ export default function AddAccountForm({ onClose }: { onClose: () => void }) {
           Cancel
         </CancelButton>
         <SubmitButton type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Create Account"}
+          {loading ? "Saving..." : isEdit ? "Update Account" : "Create Account"}
         </SubmitButton>
       </div>
     </form>
