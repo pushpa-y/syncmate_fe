@@ -225,6 +225,9 @@ export const AccountCard = styled.div<{ $isActive: boolean }>`
     transform: translateY(-2px);
     border-color: ${(props) => props.theme.accent};
     background: ${(props) => props.theme.sidebarBg};
+    .action-buttons {
+      opacity: 1;
+    }
   }
 `;
 
@@ -240,11 +243,26 @@ export const AccountName = styled.span<{ $isActive: boolean }>`
   color: ${(props) =>
     props.$isActive ? props.theme.accent : props.theme.text};
 `;
-
+export const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+`;
 export const Balance = styled.strong`
   color: #10b981;
   font-size: 18px;
   font-family: "Inter", sans-serif;
+`;
+
+export const ActionGroup = styled.div`
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  @media (max-width: 768px) {
+    opacity: 1;
+  }
 `;
 
 export const EmptyText = styled.p`
@@ -252,4 +270,24 @@ export const EmptyText = styled.p`
   text-align: center;
   margin-top: 40px;
   font-size: 15px;
+`;
+export const IconButton = styled.button<{ $variant?: "danger" | "default" }>`
+  background: ${(props) => props.theme.bg};
+  border: 1px solid ${(props) => props.theme.glassBorder};
+  color: ${(props) =>
+    props.$variant === "danger" ? "#ef4444" : props.theme.text};
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${(props) =>
+      props.$variant === "danger" ? "#fee2e2" : props.theme.accent};
+    color: ${(props) => (props.$variant === "danger" ? "#b91c1c" : "#fff")};
+    border-color: transparent;
+  }
 `;
